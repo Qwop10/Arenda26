@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Прокат Авто — Ставрополь</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ADMIN PANEL BUTTON (top right) -->
+  <button class="admin-btn" id="adminBtn" onclick="showPage('admin')" title="Панель администратора">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor"/>
+      <rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/>
+      <rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+      <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+    </svg>
+  </button>
+
+  <!-- PAGES -->
+  <div id="page-home" class="page active">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="city-label">СТАВРОПОЛЬ</div>
+      <h1 class="hero-title">ПРОКАТ АВТО<br>В СТАВРОПОЛЕ</h1>
+      <p class="hero-sub">Свежий автопарк · Доставка · 24/7</p>
+      <button class="btn-primary" onclick="showPage('catalog')">Смотреть автопарк</button>
+    </div>
+
+    <!-- Promo slider -->
+    <div class="promo-section">
+      <div class="promo-scroll" id="promoScroll">
+        <div class="promo-card">
+          <span class="promo-badge">-10%</span>
+          <div class="promo-name">Haval Jolion</div>
+          <div class="promo-desc">При аренде от 5 дней</div>
+        </div>
+        <div class="promo-card">
+          <span class="promo-badge">-15%</span>
+          <div class="promo-name">Hyundai Creta</div>
+          <div class="promo-desc">Выходной тариф</div>
+        </div>
+        <div class="promo-card">
+          <span class="promo-badge">-5%</span>
+          <div class="promo-name">Lada Vesta</div>
+          <div class="promo-desc">Первая аренда</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Date picker -->
+    <div class="date-bar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" id="dateInput" placeholder="Выберите даты..." readonly onclick="openDateModal()" />
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+    </div>
+
+    <!-- Popular cars -->
+    <div class="section-header">
+      <span class="section-title">ПОПУЛЯРНЫЕ АВТО</span>
+      <button class="section-link" onclick="showPage('catalog')">Все ›</button>
+    </div>
+    <div class="cars-grid" id="popularCars"></div>
+  </div>
+
+  <!-- CATALOG PAGE -->
+  <div id="page-catalog" class="page">
+    <div class="page-title">Каталог авто</div>
+    <div class="filter-tabs" id="filterTabs">
+      <button class="tab active" data-filter="all">Все</button>
+      <button class="tab" data-filter="econom">Эконом</button>
+      <button class="tab" data-filter="comfort">Комфорт</button>
+      <button class="tab" data-filter="comfort-plus">Комфорт+</button>
+      <button class="tab" data-filter="business">Бизнес</button>
+    </div>
+    <div class="transmission-bar">
+      <button class="trans-btn active" data-trans="all">АКПП</button>
+      <button class="trans-btn" data-trans="mkpp">МКПП</button>
+      <button class="trans-date" onclick="openDateModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        Даты
+      </button>
+      <button class="trans-sort" onclick="toggleSort()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/>
+          <line x1="3" y1="18" x2="9" y2="18"/>
+        </svg>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+    </div>
+    <div class="cars-list" id="catalogList"></div>
+  </div>
+
+  <!-- TRANSFER PAGE -->
+  <div id="page-transfer" class="page">
+    <div class="transfer-center">
+      <div class="transfer-icon">🚗</div>
+      <h2 class="transfer-title">Трансфер</h2>
+      <p class="transfer-desc">Заказ трансфера по Ставрополю и краю.<br>Аэропорт, вокзал, межгород.</p>
+      <button class="btn-primary" onclick="openTransferModal()">Рассчитать стоимость</button>
+    </div>
+  </div>
+
+  <!-- RENTALS PAGE -->
+  <div id="page-rentals" class="page">
+    <div class="page-title">Мои аренды</div>
+    <div class="rentals-list" id="rentalsList"></div>
+  </div>
+
+  <!-- PROFILE PAGE -->
+  <div id="page-profile" class="page">
+    <div class="profile-avatar">A</div>
+    <div class="profile-name">Александр Климов</div>
+    <div class="verified-badge">Верифицирован ✓</div>
+
+    <div class="profile-card">
+      <div class="card-label">ДОКУМЕНТЫ
+        <button class="upload-all-btn" onclick="showToast('Загрузка документов')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </button>
+      </div>
+      <div class="doc-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>Паспорт</span>
+        <span class="doc-status uploaded">Загружен</span>
+      </div>
+      <div class="doc-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>Прописка</span>
+        <button class="doc-upload-btn" onclick="showToast('Загрузка прописки')">Загрузить</button>
+      </div>
+      <div class="doc-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>Водительские права</span>
+        <span class="doc-status uploaded">Загружен</span>
+      </div>
+    </div>
+
+    <div class="profile-card">
+      <div class="card-label">АКТИВНЫЕ АРЕНДЫ</div>
+      <div class="rental-item active-rental" onclick="showPage('rentals')">
+        <div class="ri-left">
+          <div class="ri-name">Toyota Camry V75</div>
+          <div class="ri-dates">15.07 – 22.07.2025</div>
+          <div class="ri-price">45 500 ₽</div>
+        </div>
+        <div class="ri-right">
+          <span class="status-badge active">Активна</span>
+          <button class="ri-more" onclick="showPage('rentals')">Подробнее ›</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-card collapsible" onclick="toggleHistory()">
+      <div class="card-label">ИСТОРИЯ АРЕНД
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="historyArrow">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div id="historyContent" class="history-content" style="display:none">
+        <div class="rental-item" style="padding:8px 0">
+          <div class="ri-left">
+            <div class="ri-name">Hyundai Creta</div>
+            <div class="ri-dates">01.06 – 05.06.2025</div>
+            <div class="ri-price">16 800 ₽</div>
+          </div>
+          <span class="status-badge done">Завершена</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-card">
+      <div class="card-label">НАСТРОЙКИ</div>
+      <div class="setting-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span>Уведомления</span>
+        <div class="toggle active" id="notifToggle" onclick="toggleNotif()">
+          <div class="toggle-thumb"></div>
+        </div>
+      </div>
+      <div class="setting-item" onclick="showTerms()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>Условия аренды</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="setting-item" onclick="showSupport()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg>
+        <span>Поддержка</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN PAGE -->
+  <div id="page-admin" class="page admin-page">
+    <div class="admin-header">
+      <div>
+        <div class="admin-title">Панель управления</div>
+      </div>
+      <div class="admin-user">
+        <div>
+          <div class="au-name">Иван А.</div>
+          <div class="au-role">Администратор</div>
+        </div>
+        <div class="notif-dot">🔔</div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Активных аренд</div>
+        <div class="stat-value">5</div>
+      </div>
+      <div class="stat-card highlight">
+        <div class="stat-label">Выручка сегодня</div>
+        <div class="stat-value">47 500 ₽</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Авто в прокате</div>
+        <div class="stat-value">12 / 28</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Новых заявок</div>
+        <div class="stat-value">3 <span class="red-dot">●</span></div>
+      </div>
+    </div>
+
+    <div class="admin-section-title">ЗАЯВКИ НА АРЕНДУ</div>
+    <div class="bookings-table">
+      <div class="bt-header">
+        <span>КЛИЕНТ</span><span>АВТО</span><span>СУММА</span><span>СТАТУС</span>
+      </div>
+      <div class="bt-row">
+        <div class="bt-client"><b>Александр К.</b><br><small>15.07–22.07</small></div>
+        <div class="bt-car">Toyota Camry</div>
+        <div class="bt-price">45 500 ₽</div>
+        <div><span class="status-badge new">Новая</span></div>
+        <div class="bt-actions" style="grid-column:1/-1;margin-top:6px">
+          <button class="btn-confirm" onclick="confirmBooking(this, 'Александр К.')">✓ Подтвердить</button>
+          <button class="btn-decline" onclick="declineBooking(this)">✕ Отклонить</button>
+        </div>
+      </div>
+      <div class="bt-row">
+        <div class="bt-client"><b>Мария Л.</b><br><small>14.07–17.07</small></div>
+        <div class="bt-car">Hyundai Creta</div>
+        <div class="bt-price">12 600 ₽</div>
+        <div><span class="status-badge active">Активна</span></div>
+      </div>
+      <div class="bt-row">
+        <div class="bt-client"><b>Дмитрий В.</b><br><small>10.07–12.07</small></div>
+        <div class="bt-car">BMW 5 Series</div>
+        <div class="bt-price">30 000 ₽</div>
+        <div><span class="status-badge done">Завершена</span></div>
+      </div>
+      <div class="bt-row">
+        <div class="bt-client"><b>Ольга Т.</b><br><small>18.07–20.07</small></div>
+        <div class="bt-car">Lada Vesta</div>
+        <div class="bt-price">6 600 ₽</div>
+        <div><span class="status-badge new">Новая</span></div>
+        <div class="bt-actions" style="grid-column:1/-1;margin-top:6px">
+          <button class="btn-confirm" onclick="confirmBooking(this, 'Ольга Т.')">✓ Подтвердить</button>
+          <button class="btn-decline" onclick="declineBooking(this)">✕ Отклонить</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-section-title">СТАТУС АВТОПАРКА</div>
+    <div class="fleet-grid">
+      <div class="fleet-item free">Lada Granta</div>
+      <div class="fleet-item rented">Lada Vesta</div>
+      <div class="fleet-item free">Haval Jolion</div>
+      <div class="fleet-item rented">Hyundai Creta</div>
+      <div class="fleet-item rented">Toyota Camry</div>
+      <div class="fleet-item service">BMW 5 Series</div>
+    </div>
+    <div class="fleet-legend">
+      <span><span class="dot free-dot"></span>Свободно</span>
+      <span><span class="dot rented-dot"></span>В аренде</span>
+      <span><span class="dot service-dot"></span>Обслуживание</span>
+    </div>
+
+    <div class="admin-section-title">БЫСТРЫЕ ДЕЙСТВИЯ</div>
+    <div class="quick-actions">
+      <button class="qa-btn" onclick="showAddCar()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Добавить авто
+      </button>
+      <button class="qa-btn" onclick="showMailer()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Рассылка
+      </button>
+      <button class="qa-btn" onclick="showReport()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Отчёт
+      </button>
+    </div>
+
+    <button class="back-from-admin" onclick="showPage('home')">← Вернуться на главную</button>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="nav-item active" data-page="home" onclick="showPage('home')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Главная</span>
+    </button>
+    <button class="nav-item" data-page="catalog" onclick="showPage('catalog')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      <span>Каталог</span>
+    </button>
+    <button class="nav-item" data-page="transfer" onclick="showPage('transfer')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      <span>Трансфер</span>
+    </button>
+    <button class="nav-item" data-page="rentals" onclick="showPage('rentals')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Аренды</span>
+    </button>
+    <button class="nav-item" data-page="profile" onclick="showPage('profile')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Профиль</span>
+    </button>
+  </nav>
+
+  <!-- MODALS -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+
+  <!-- Date Modal -->
+  <div class="modal" id="dateModal">
+    <div class="modal-title">Выберите даты аренды</div>
+    <div class="date-inputs">
+      <div class="date-field">
+        <label>Дата начала</label>
+        <input type="date" id="startDate" />
+      </div>
+      <div class="date-field">
+        <label>Дата окончания</label>
+        <input type="date" id="endDate" />
+      </div>
+    </div>
+    <button class="btn-primary full-width" onclick="applyDates()">Применить</button>
+    <button class="btn-secondary full-width" onclick="closeModal()">Отмена</button>
+  </div>
+
+  <!-- Transfer Modal -->
+  <div class="modal" id="transferModal">
+    <div class="modal-title">Рассчитать трансфер</div>
+    <div class="transfer-form">
+      <div class="tf-field">
+        <label>Откуда</label>
+        <input type="text" placeholder="Адрес подачи" id="fromAddr" />
+      </div>
+      <div class="tf-field">
+        <label>Куда</label>
+        <input type="text" placeholder="Адрес назначения" id="toAddr" />
+      </div>
+      <div class="tf-field">
+        <label>Дата и время</label>
+        <input type="datetime-local" id="transferDateTime" />
+      </div>
+      <div class="tf-field">
+        <label>Класс авто</label>
+        <select id="transferClass">
+          <option value="econom">Эконом — от 800 ₽</option>
+          <option value="comfort">Комфорт — от 1 200 ₽</option>
+          <option value="business">Бизнес — от 2 000 ₽</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-primary full-width" onclick="calcTransfer()">Рассчитать стоимость</button>
+    <button class="btn-secondary full-width" onclick="closeModal()">Отмена</button>
+  </div>
+
+  <!-- Booking Modal -->
+  <div class="modal" id="bookingModal">
+    <div class="modal-title" id="bookingTitle">Забронировать</div>
+    <div class="booking-car-info" id="bookingCarInfo"></div>
+    <div class="date-inputs">
+      <div class="date-field">
+        <label>Дата начала</label>
+        <input type="date" id="bookStartDate" />
+      </div>
+      <div class="date-field">
+        <label>Дата окончания</label>
+        <input type="date" id="bookEndDate" />
+      </div>
+    </div>
+    <div class="booking-total" id="bookingTotal"></div>
+    <button class="btn-primary full-width" onclick="submitBooking()">Отправить заявку</button>
+    <button class="btn-secondary full-width" onclick="closeModal()">Отмена</button>
+  </div>
+
+  <!-- Add Car Modal -->
+  <div class="modal" id="addCarModal">
+    <div class="modal-title">Добавить авто</div>
+    <div class="transfer-form">
+      <div class="tf-field"><label>Марка и модель</label><input type="text" placeholder="Toyota Camry V75" /></div>
+      <div class="tf-field"><label>Год</label><input type="number" placeholder="2023" /></div>
+      <div class="tf-field"><label>Класс</label>
+        <select><option>Эконом</option><option>Комфорт</option><option>Комфорт+</option><option>Бизнес</option></select>
+      </div>
+      <div class="tf-field"><label>Коробка передач</label>
+        <select><option>АКПП</option><option>МКПП</option></select>
+      </div>
+      <div class="tf-field"><label>Цена в сутки (₽)</label><input type="number" placeholder="3500" /></div>
+    </div>
+    <button class="btn-primary full-width" onclick="saveNewCar()">Добавить</button>
+    <button class="btn-secondary full-width" onclick="closeModal()">Отмена</button>
+  </div>
+
+  <!-- Report Modal -->
+  <div class="modal" id="reportModal">
+    <div class="modal-title">Отчёт</div>
+    <div class="report-stats">
+      <div class="rs-item"><span>Аренд за месяц</span><b>23</b></div>
+      <div class="rs-item"><span>Выручка за месяц</span><b>612 500 ₽</b></div>
+      <div class="rs-item"><span>Средний чек</span><b>26 630 ₽</b></div>
+      <div class="rs-item"><span>Загрузка парка</span><b>78%</b></div>
+      <div class="rs-item"><span>Новых клиентов</span><b>8</b></div>
+    </div>
+    <button class="btn-primary full-width" onclick="showToast('Отчёт выгружен')">Скачать PDF</button>
+    <button class="btn-secondary full-width" onclick="closeModal()">Закрыть</button>
+  </div>
+
+  <!-- Mailer Modal -->
+  <div class="modal" id="mailerModal">
+    <div class="modal-title">Рассылка клиентам</div>
+    <div class="transfer-form">
+      <div class="tf-field"><label>Кому</label>
+        <select><option>Всем клиентам</option><option>Активным</option><option>Завершившим аренду</option></select>
+      </div>
+      <div class="tf-field"><label>Заголовок</label><input type="text" placeholder="Специальное предложение!" /></div>
+      <div class="tf-field"><label>Текст сообщения</label><textarea placeholder="Введите текст..." rows="4"></textarea></div>
+    </div>
+    <button class="btn-primary full-width" onclick="sendMailing()">Отправить</button>
+    <button class="btn-secondary full-width" onclick="closeModal()">Отмена</button>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Phone button -->
+  <a class="phone-btn" href="tel:+79622655555" id="phoneBtn">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1">
+      <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.69 12 19.79 19.79 0 011.61 3.41 2 2 0 013.6 1.22h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L7.91 8.8a16 16 0 006.29 6.29l.95-.95a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
+    </svg>
+    +7 962 265-55-55
+  </a>
+
+  <script src="app.js"></script>
+</body>
+</html>
