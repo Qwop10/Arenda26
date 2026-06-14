@@ -28,27 +28,6 @@
       <button class="btn-primary" onclick="showPage('catalog')">Смотреть автопарк</button>
     </div>
 
-    <!-- Promo slider -->
-    <div class="promo-section">
-      <div class="promo-scroll" id="promoScroll">
-        <div class="promo-card">
-          <span class="promo-badge">-10%</span>
-          <div class="promo-name">Haval Jolion</div>
-          <div class="promo-desc">При аренде от 5 дней</div>
-        </div>
-        <div class="promo-card">
-          <span class="promo-badge">-15%</span>
-          <div class="promo-name">Hyundai Creta</div>
-          <div class="promo-desc">Выходной тариф</div>
-        </div>
-        <div class="promo-card">
-          <span class="promo-badge">-5%</span>
-          <div class="promo-name">Lada Vesta</div>
-          <div class="promo-desc">Первая аренда</div>
-        </div>
-      </div>
-    </div>
-
     <!-- Date picker -->
     <div class="date-bar">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -104,12 +83,9 @@
 
   <!-- TRANSFER PAGE -->
   <div id="page-transfer" class="page">
-    <div class="transfer-center">
-      <div class="transfer-icon">🚗</div>
-      <h2 class="transfer-title">Трансфер</h2>
-      <p class="transfer-desc">Заказ трансфера по Ставрополю и краю.<br>Аэропорт, вокзал, межгород.</p>
-      <button class="btn-primary" onclick="openTransferModal()">Рассчитать стоимость</button>
-    </div>
+    <div class="page-title">Трансфер</div>
+    <p class="transfer-subtitle">Выберите автомобиль — цена за час по городу</p>
+    <div class="cars-list" id="transferList"></div>
   </div>
 
   <!-- RENTALS PAGE -->
@@ -120,48 +96,43 @@
 
   <!-- PROFILE PAGE -->
   <div id="page-profile" class="page">
-    <div class="profile-avatar">A</div>
-    <div class="profile-name">Александр Климов</div>
-    <div class="verified-badge">Верифицирован ✓</div>
+    <div class="profile-avatar" id="profileAvatar">?</div>
+    <div class="profile-name" id="profileName">Пользователь</div>
+    <div class="verified-badge" id="verifiedBadge">Неверифицированный аккаунт</div>
 
     <div class="profile-card">
-      <div class="card-label">ДОКУМЕНТЫ
-        <button class="upload-all-btn" onclick="showToast('Загрузка документов')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-        </button>
-      </div>
+      <div class="card-label">ДОКУМЕНТЫ</div>
       <div class="doc-item">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         <span>Паспорт</span>
-        <span class="doc-status uploaded">Загружен</span>
+        <span class="doc-status" id="doc-status-passport">Не загружен</span>
       </div>
       <div class="doc-item">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         <span>Прописка</span>
-        <button class="doc-upload-btn" onclick="showToast('Загрузка прописки')">Загрузить</button>
+        <span class="doc-status" id="doc-status-registration">Не загружен</span>
       </div>
       <div class="doc-item">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         <span>Водительские права</span>
-        <span class="doc-status uploaded">Загружен</span>
+        <span class="doc-status" id="doc-status-license">Не загружен</span>
       </div>
+      <button class="btn-primary full-width" id="sendDocsBtn" onclick="sendDocsToBot()" style="margin-top:14px">
+        Отправить документы боту
+      </button>
     </div>
 
     <div class="profile-card">
       <div class="card-label">АКТИВНЫЕ АРЕНДЫ</div>
-      <div class="rental-item active-rental" onclick="showPage('rentals')">
-        <div class="ri-left">
-          <div class="ri-name">Toyota Camry V75</div>
-          <div class="ri-dates">15.07 – 22.07.2025</div>
-          <div class="ri-price">45 500 ₽</div>
-        </div>
-        <div class="ri-right">
-          <span class="status-badge active">Активна</span>
-          <button class="ri-more" onclick="showPage('rentals')">Подробнее ›</button>
-        </div>
+      <div id="profileActiveRentals">
+        <div class="empty-state" style="padding:10px 0">Нет активных аренд</div>
+      </div>
+    </div>
+
+    <div class="profile-card">
+      <div class="card-label">АКТИВНЫЙ ТРАНСФЕР</div>
+      <div id="profileActiveTransfer">
+        <div class="empty-state" style="padding:10px 0">Нет активных трансферов</div>
       </div>
     </div>
 
@@ -172,14 +143,18 @@
         </svg>
       </div>
       <div id="historyContent" class="history-content" style="display:none">
-        <div class="rental-item" style="padding:8px 0">
-          <div class="ri-left">
-            <div class="ri-name">Hyundai Creta</div>
-            <div class="ri-dates">01.06 – 05.06.2025</div>
-            <div class="ri-price">16 800 ₽</div>
-          </div>
-          <span class="status-badge done">Завершена</span>
-        </div>
+        <div class="empty-state" style="padding:10px 0">Нет завершённых аренд</div>
+      </div>
+    </div>
+
+    <div class="profile-card collapsible" onclick="toggleTransferHistory()">
+      <div class="card-label">ИСТОРИЯ ТРАНСФЕРА
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="transferHistoryArrow">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div id="transferHistoryContent" class="history-content" style="display:none">
+        <div class="empty-state" style="padding:10px 0">Нет завершённых трансферов</div>
       </div>
     </div>
 
@@ -223,59 +198,35 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Активных аренд</div>
-        <div class="stat-value">5</div>
+        <div class="stat-value" id="statActiveRentals">0</div>
       </div>
       <div class="stat-card highlight">
-        <div class="stat-label">Выручка сегодня</div>
-        <div class="stat-value">47 500 ₽</div>
+        <div class="stat-label">Выручка (аренды)</div>
+        <div class="stat-value" id="statRevenue">0 ₽</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Авто в прокате</div>
-        <div class="stat-value">12 / 28</div>
+        <div class="stat-label">Заявок трансфер</div>
+        <div class="stat-value" id="statTransfers">0</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Новых заявок</div>
-        <div class="stat-value">3 <span class="red-dot">●</span></div>
+        <div class="stat-value" id="statNewBookings">0 <span class="red-dot">●</span></div>
       </div>
     </div>
 
+    <div class="admin-section-title">ВЕРИФИКАЦИЯ КЛИЕНТОВ</div>
+    <div class="bookings-table" id="adminVerificationList">
+      <div class="empty-state" style="padding:16px">Нет заявок на верификацию</div>
+    </div>
+
     <div class="admin-section-title">ЗАЯВКИ НА АРЕНДУ</div>
-    <div class="bookings-table">
-      <div class="bt-header">
-        <span>КЛИЕНТ</span><span>АВТО</span><span>СУММА</span><span>СТАТУС</span>
-      </div>
-      <div class="bt-row">
-        <div class="bt-client"><b>Александр К.</b><br><small>15.07–22.07</small></div>
-        <div class="bt-car">Toyota Camry</div>
-        <div class="bt-price">45 500 ₽</div>
-        <div><span class="status-badge new">Новая</span></div>
-        <div class="bt-actions" style="grid-column:1/-1;margin-top:6px">
-          <button class="btn-confirm" onclick="confirmBooking(this, 'Александр К.')">✓ Подтвердить</button>
-          <button class="btn-decline" onclick="declineBooking(this)">✕ Отклонить</button>
-        </div>
-      </div>
-      <div class="bt-row">
-        <div class="bt-client"><b>Мария Л.</b><br><small>14.07–17.07</small></div>
-        <div class="bt-car">Hyundai Creta</div>
-        <div class="bt-price">12 600 ₽</div>
-        <div><span class="status-badge active">Активна</span></div>
-      </div>
-      <div class="bt-row">
-        <div class="bt-client"><b>Дмитрий В.</b><br><small>10.07–12.07</small></div>
-        <div class="bt-car">BMW 5 Series</div>
-        <div class="bt-price">30 000 ₽</div>
-        <div><span class="status-badge done">Завершена</span></div>
-      </div>
-      <div class="bt-row">
-        <div class="bt-client"><b>Ольга Т.</b><br><small>18.07–20.07</small></div>
-        <div class="bt-car">Lada Vesta</div>
-        <div class="bt-price">6 600 ₽</div>
-        <div><span class="status-badge new">Новая</span></div>
-        <div class="bt-actions" style="grid-column:1/-1;margin-top:6px">
-          <button class="btn-confirm" onclick="confirmBooking(this, 'Ольга Т.')">✓ Подтвердить</button>
-          <button class="btn-decline" onclick="declineBooking(this)">✕ Отклонить</button>
-        </div>
-      </div>
+    <div class="bookings-table" id="adminBookingList">
+      <div class="empty-state" style="padding:16px">Нет заявок на аренду</div>
+    </div>
+
+    <div class="admin-section-title">ЗАЯВКИ НА ТРАНСФЕР</div>
+    <div class="bookings-table" id="adminTransferList">
+      <div class="empty-state" style="padding:16px">Нет заявок на трансфер</div>
     </div>
 
     <div class="admin-section-title">СТАТУС АВТОПАРКА</div>
@@ -358,7 +309,8 @@
 
   <!-- Transfer Modal -->
   <div class="modal" id="transferModal">
-    <div class="modal-title">Рассчитать трансфер</div>
+    <div class="modal-title" id="transferModalTitle">Заказать трансфер</div>
+    <div class="transfer-car-info" id="transferCarInfo"></div>
     <div class="transfer-form">
       <div class="tf-field">
         <label>Откуда</label>
@@ -369,20 +321,57 @@
         <input type="text" placeholder="Адрес назначения" id="toAddr" />
       </div>
       <div class="tf-field">
-        <label>Дата и время</label>
-        <input type="datetime-local" id="transferDateTime" />
-      </div>
-      <div class="tf-field">
-        <label>Класс авто</label>
-        <select id="transferClass">
-          <option value="econom">Эконом — от 800 ₽</option>
-          <option value="comfort">Комфорт — от 1 200 ₽</option>
-          <option value="business">Бизнес — от 2 000 ₽</option>
-        </select>
+        <label>Время подачи</label>
+        <input type="datetime-local" id="transferStart" />
       </div>
     </div>
-    <button class="btn-primary full-width" onclick="calcTransfer()">Рассчитать стоимость</button>
+    <button class="btn-primary full-width" onclick="submitTransfer()">Заказать</button>
     <button class="btn-secondary full-width" onclick="closeModal()">Отмена</button>
+  </div>
+
+  <!-- Admin Confirm Transfer Modal -->
+  <div class="modal" id="confirmTransferModal">
+    <div class="modal-title">Подтвердить трансфер</div>
+    <div class="transfer-car-info" id="confirmTransferInfo"></div>
+    <div class="transfer-form">
+      <div class="tf-field">
+        <label>Время окончания маршрута</label>
+        <input type="datetime-local" id="confirmTransferEnd" onchange="updateConfirmTotal()" />
+      </div>
+    </div>
+    <div class="booking-total" id="confirmTransferTotal"></div>
+    <button class="btn-primary full-width" onclick="saveConfirmTransfer()">Сохранить и подтвердить</button>
+    <button class="btn-secondary full-width" onclick="closeModal()">Отмена</button>
+  </div>
+
+  <!-- Payment Modal -->
+  <div class="modal" id="paymentModal">
+    <div class="modal-title">Оплата трансфера</div>
+    <div class="payment-amount" id="paymentAmount"></div>
+    <div class="payment-info">
+      <div class="payment-label">Перевод на номер телефона:</div>
+      <div class="payment-phone">+7 962 265-55-55</div>
+      <div class="payment-bank">Тинькофф · Сбербанк</div>
+      <div class="payment-note">В комментарии укажите ваше имя и дату трансфера</div>
+    </div>
+    <div class="receipt-steps">
+      <div class="receipt-step">
+        <div class="step-num">1</div>
+        <div class="step-text">Сделайте перевод на номер выше</div>
+      </div>
+      <div class="receipt-step">
+        <div class="step-num">2</div>
+        <div class="step-text">Сфотографируйте чек из банковского приложения</div>
+      </div>
+      <div class="receipt-step">
+        <div class="step-num">3</div>
+        <div class="step-text">Нажмите кнопку ниже — откроется чат с нашим ботом. Отправьте туда фото чека</div>
+      </div>
+    </div>
+    <button class="btn-primary full-width" onclick="sendReceipt()">
+      Отправить чек боту
+    </button>
+    <button class="btn-secondary full-width" onclick="closeModal()">Закрыть</button>
   </div>
 
   <!-- Booking Modal -->
