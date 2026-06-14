@@ -220,14 +220,26 @@ html, body {
   transition: transform 0.15s;
 }
 .car-card:active { transform: scale(0.97); }
-.car-img {
-  height: 90px;
+.car-img-wrap {
+  height: 100px;
   background: linear-gradient(135deg, var(--surface2), #2a0a12);
+  position: relative;
+  overflow: hidden;
+}
+.car-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.car-img-fallback {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 32px;
-  position: relative;
+  background: linear-gradient(135deg, var(--surface2), #2a0a12);
 }
 .car-class-badge {
   position: absolute;
@@ -237,9 +249,10 @@ html, body {
   font-weight: 600;
   padding: 2px 7px;
   border-radius: 10px;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.6);
   border: 1px solid rgba(232,38,74,0.3);
   color: var(--accent);
+  z-index: 1;
 }
 .car-info { padding: 10px; }
 .car-name { font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 4px; }
@@ -317,13 +330,14 @@ html, body {
   align-items: center;
   gap: 5px;
   margin-left: auto;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: rgba(232,38,74,0.12);
+  border: 1px solid rgba(232,38,74,0.4);
   border-radius: 10px;
   padding: 6px 12px;
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--accent);
   cursor: pointer;
+  font-weight: 600;
 }
 .trans-sort {
   display: flex;
@@ -352,16 +366,35 @@ html, body {
   gap: 12px;
   padding: 14px;
 }
-.car-list-img {
-  width: 90px;
-  height: 65px;
+.car-list-img-wrap {
+  width: 100px;
+  height: 70px;
   background: linear-gradient(135deg, var(--surface2), #2a0a12);
   border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
+  overflow: hidden;
   flex-shrink: 0;
+  position: relative;
+}
+.car-list-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* empty state */
+.empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 24px 0;
+}
+.more-rentals {
+  text-align: center;
+  font-size: 13px;
+  color: var(--accent);
+  padding: 8px 0 0;
+  cursor: pointer;
 }
 .car-list-details { flex: 1; }
 .car-list-name { font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 3px; }
@@ -479,30 +512,80 @@ html, body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 0;
+  padding: 12px 0;
   border-bottom: 1px solid var(--border);
   color: var(--text-muted);
+  cursor: pointer;
+  transition: opacity 0.15s;
 }
+.doc-item:active { opacity: 0.7; }
 .doc-item:last-child { border-bottom: none; }
 .doc-item span:nth-child(2) { flex: 1; color: var(--text); }
-.doc-status { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 10px; }
-.doc-status.uploaded { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
-.doc-upload-btn {
+.doc-status {
   font-size: 11px;
   font-weight: 600;
-  padding: 3px 10px;
+  padding: 3px 8px;
   border-radius: 10px;
-  background: rgba(232,38,74,0.15);
+  background: rgba(232,38,74,0.12);
   color: var(--accent);
   border: 1px solid var(--border);
-  cursor: pointer;
+  white-space: nowrap;
 }
-.upload-all-btn {
-  background: none;
-  border: none;
+.doc-status.uploaded {
+  background: rgba(34,197,94,0.15);
+  color: var(--green);
+  border: 1px solid rgba(34,197,94,0.3);
+}
+
+/* Verified badge variants */
+.verified-badge.verified {
+  background: rgba(34,197,94,0.15);
+  border: 1px solid rgba(34,197,94,0.3);
+  color: var(--green);
+}
+.verified-badge.unverified {
+  background: rgba(150,150,150,0.1);
+  border: 1px solid rgba(150,150,150,0.2);
   color: var(--text-muted);
+}
+.verified-badge.pending {
+  background: rgba(234,179,8,0.12);
+  border: 1px solid rgba(234,179,8,0.3);
+  color: var(--yellow);
+}
+
+/* Doc status — pending */
+.doc-status.pending {
+  background: rgba(234,179,8,0.12);
+  color: var(--yellow);
+  border: 1px solid rgba(234,179,8,0.3);
+}
+
+/* Document upload modal */
+.doc-upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  padding: 30px 20px;
   cursor: pointer;
-  padding: 2px;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+  transition: border-color 0.2s;
+  margin-bottom: 12px;
+}
+.doc-upload-zone:active { border-color: var(--accent); }
+.doc-preview {
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
 }
 
 .rental-item {
@@ -643,6 +726,20 @@ html, body {
 .bt-car { font-size: 13px; color: var(--accent); font-weight: 600; }
 .bt-price { font-size: 13px; font-weight: 700; }
 .bt-actions { display: flex; gap: 8px; }
+
+/* Transfer rows in admin — same card look as booking rows */
+.tr-row {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.tr-row:last-child { border-bottom: none; }
+.tr-row--faded { opacity: 0.5; }
+.tr-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
 .btn-confirm {
   background: rgba(34,197,94,0.15);
   color: var(--green);
@@ -845,6 +942,23 @@ html, body {
 .tf-field select option { background: #1a0c0e; }
 .tf-field textarea { resize: none; }
 
+.transfer-subtitle {
+  padding: 0 20px 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.transfer-car-info {
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  text-align: center;
+}
+
 .booking-car-info {
   background: var(--surface);
   border-radius: 10px;
@@ -874,6 +988,94 @@ html, body {
 }
 .rs-item span { color: var(--text-muted); }
 .rs-item b { color: var(--accent); font-size: 16px; }
+
+/* ===== PAYMENT MODAL ===== */
+.payment-amount {
+  text-align: center;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+.payment-info {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+}
+.payment-label { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+.payment-phone { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+.payment-bank { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; }
+.payment-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: rgba(232,38,74,0.06);
+  border-radius: 8px;
+  padding: 8px;
+  line-height: 1.4;
+}
+.receipt-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0;
+}
+.receipt-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.step-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  padding-top: 3px;
+}
+
+.upload-receipt-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+.upload-receipt-btn:hover { border-color: var(--accent); color: var(--text); }
+
+/* ===== PAY BUTTON ===== */
+.pay-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: background 0.2s;
+}
+.pay-btn:active { background: var(--accent2); }
 
 /* ===== PHONE BUTTON ===== */
 .phone-btn {
