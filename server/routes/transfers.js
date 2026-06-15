@@ -4,7 +4,12 @@ const bot    = require('../bot');
 
 router.get('/', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM transfer_bookings ORDER BY created_at DESC');
+    const { rows } = await pool.query(`
+      SELECT tb.*, tc.price_per_hour
+      FROM transfer_bookings tb
+      LEFT JOIN transfer_cars tc ON tb.car_id = tc.id
+      ORDER BY tb.created_at DESC
+    `);
     res.json(rows);
   } catch(e) { res.status(500).json({ error: e.message }); }
 });

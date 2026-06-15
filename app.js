@@ -199,7 +199,8 @@ async function initApp() {
     trBookData.forEach(b => transferBookings.push({
       id: b.id, car: b.car_name, from: b.route?.split(' → ')[0] || '',
       to: b.route?.split(' → ')[1] || '', startTime: b.date,
-      status: b.status, price: b.total_price, tg_user_id: b.tg_user_id
+      status: b.status, price: b.total_price, tg_user_id: b.tg_user_id,
+      pricePerHour: b.price_per_hour || 0, hours: b.hours, receipt_url: b.receipt_url
     }));
 
     messages.length = 0;
@@ -781,8 +782,9 @@ function openConfirmTransferModal(index) {
   confirmingTransferIndex = index;
   const t = transferBookings[index];
 
+  const pph = t.pricePerHour || 0;
   document.getElementById('confirmTransferInfo').textContent =
-    `${t.car} · ${t.from} → ${t.to} · Подача: ${t.startTime} · ${t.pricePerHour.toLocaleString('ru')} ₽/час`;
+    `${t.car} · ${t.from} → ${t.to} · Подача: ${t.startTime}${pph ? ` · ${pph.toLocaleString('ru')} ₽/час` : ''}`;
 
   document.getElementById('confirmTransferEnd').value = '';
   document.getElementById('confirmTransferTotal').textContent = '';
