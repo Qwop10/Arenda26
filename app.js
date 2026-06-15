@@ -211,12 +211,21 @@ async function initApp() {
 }
 
 // ===== INIT =====
+const ADMIN_IDS = [763224120, 628854840];
+
 document.addEventListener('DOMContentLoaded', () => {
   initApp();
   setupFilterTabs();
   setupTransButtons();
   initProfile();
   renderAdminFleet();
+
+  // Показываем кнопку админа только для разрешённых ID
+  const tgUserId = Number(tg?.initDataUnsafe?.user?.id);
+  const adminBtn = document.getElementById('adminBtn');
+  if (adminBtn) {
+    adminBtn.style.display = ADMIN_IDS.includes(tgUserId) ? 'flex' : 'none';
+  }
 });
 
 // ===== PROFILE INIT =====

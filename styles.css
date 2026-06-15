@@ -50,7 +50,7 @@ html, body {
   color: var(--accent);
   width: 36px;
   height: 36px;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   cursor: pointer;
