@@ -6,8 +6,10 @@ if (tg) {
   tg.setBackgroundColor('#0e0608');
 }
 
+const API = 'https://arenda26-production.up.railway.app';
+
 // ===== CAR DATA =====
-const CARS = [
+let CARS = [
   // ЭКОНОМ
   { id: 1, name: 'Lada Granta АКПП', year: 2024, trans: 'АКПП', price: 2600, class: 'econom',
     img: 'фото машин/Lada Granta.webp' },
@@ -78,7 +80,7 @@ const CARS = [
 ];
 
 // ===== TRANSFER CAR DATA =====
-const TRANSFER_CARS = [
+let TRANSFER_CARS = [
   { id: 1, name: 'Mercedes-Benz E-Class W-213 Restyling', price: 3000, type: 'sedan',
     img: 'фото машин/Mercedes-Benz E-Class W-213 Restyling.webp' },
   { id: 2, name: 'Mercedes-Benz E-Class W-213', price: 3000, type: 'sedan',
@@ -140,12 +142,77 @@ let newCarImgUrl = '';
 // Selected price type in Add Car modal: 'rent' | 'transfer'
 let addCarPriceType = 'rent';
 
-// ===== INIT =====
-document.addEventListener('DOMContentLoaded', () => {
+// ===== API INIT =====
+async function initApp() {
+  try {
+    const [carsRes, trRes, bookRes, trBookRes, msgRes] = await Promise.all([
+      fetch(`${API}/api/cars`),
+      fetch(`${API}/api/cars/transfer`),
+      fetch(`${API}/api/bookings`),
+      fetch(`${API}/api/transfers`),
+      fetch(`${API}/api/messages`)
+    ]);
+    const carsData    = await carsRes.json();
+    const trData      = await trRes.json();
+    const bookData    = await bookRes.json();
+    const trBookData  = await trBookRes.json();
+    const msgData     = await msgRes.json();
+
+    CARS.length = 0;
+    carsData.forEach(c => {
+      CARS.push({ id: c.id, name: c.name, year: c.year, trans: c.transmission,
+        transmission: c.transmission, price: c.price, class: c.class, img: c.img });
+      fleetStatus[c.id] = c.available !== false;
+    });
+
+    TRANSFER_CARS.length = 0;
+    trData.forEach(c => {
+      TRANSFER_CARS.push({ id: c.id, name: c.name, year: c.year, transmission: c.transmission,
+        trans: c.transmission, pricePerHour: c.price_per_hour, price: c.price_per_hour,
+        type: c.type, img: c.img });
+      transferFleetStatus[c.id] = c.available !== false;
+    });
+
+    bookings.length = 0;
+    bookData.forEach(b => bookings.push({
+      id: b.id, car: b.car_name, client: b.client_name, phone: b.client_phone,
+      start: b.start_date, end: b.end_date,
+      price: b.total_price ? b.total_price.toLocaleString('ru') : '—',
+      status: b.status, tg_user_id: b.tg_user_id
+    }));
+
+    transferBookings.length = 0;
+    trBookData.forEach(b => transferBookings.push({
+      id: b.id, car: b.car_name, from: b.route?.split(' → ')[0] || '',
+      to: b.route?.split(' → ')[1] || '', startTime: b.date,
+      status: b.status, price: b.total_price, tg_user_id: b.tg_user_id
+    }));
+
+    messages.length = 0;
+    msgData.forEach(m => messages.push({
+      title: m.title, text: m.body,
+      time: new Date(m.created_at).toLocaleDateString('ru')
+    }));
+
+  } catch(e) {
+    console.warn('API unavailable, using local data:', e.message);
+  }
+
   renderPopularCars();
   renderCatalog();
   renderRentals();
   renderTransferCars();
+  renderAdminFleet();
+  renderProfileRentals();
+  renderProfileMessages();
+  renderAdminBookings();
+  renderAdminTransfers();
+  updateAdminStats();
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+  initApp();
   setupFilterTabs();
   setupTransButtons();
   initProfile();
@@ -563,7 +630,7 @@ function openTransferModal(carId) {
   openModal('transferModal');
 }
 
-function submitTransfer() {
+async function submitTransfer() {
   if (!selectedTransferCar) return;
 
   const from = document.getElementById('fromAddr').value.trim();
@@ -578,19 +645,26 @@ function submitTransfer() {
     return `${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
   };
 
-  transferBookings.unshift({
-    id: Date.now(),
-    car: selectedTransferCar.name,
+  const tgId = tg?.initDataUnsafe?.user?.id || null;
+  const local = {
+    id: Date.now(), car: selectedTransferCar.name,
     pricePerHour: selectedTransferCar.price,
-    from,
-    to,
-    startTime: fmt(start),
-    endTime: null,
-    hours: null,
-    price: null,
-    status: 'pending',
-  });
+    from, to, startTime: fmt(start), status: 'pending'
+  };
 
+  try {
+    const res = await fetch(`${API}/api/transfers`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        car_id: selectedTransferCar.id, car_name: selectedTransferCar.name,
+        route: `${from} → ${to}`, date: fmt(start), tg_user_id: tgId
+      })
+    });
+    const saved = await res.json();
+    local.id = saved.id;
+  } catch(e) { console.warn('Transfer API error:', e.message); }
+
+  transferBookings.unshift(local);
   closeModal();
   renderProfileTransfer();
   renderAdminTransfers();
@@ -876,7 +950,7 @@ function updateBookingTotal() {
   document.getElementById('bookingTotal').textContent = `Итого за ${days} дн.: ${total.toLocaleString('ru')} ₽`;
 }
 
-function submitBooking() {
+async function submitBooking() {
   if (!selectedCar) return;
 
   const start = document.getElementById('bookStartDate').value;
@@ -884,24 +958,32 @@ function submitBooking() {
 
   if (!start || !end) { showToast('Выберите даты'); return; }
 
-  const fmt = d => {
-    const p = d.split('-');
-    return `${p[2]}.${p[1]}.${p[0]}`;
-  };
+  const fmt = d => { const p = d.split('-'); return `${p[2]}.${p[1]}.${p[0]}`; };
   const days = Math.ceil((new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24));
   const total = days * selectedCar.price;
   const userName = document.getElementById('profileName')?.textContent || 'Пользователь';
+  const tgId = tg?.initDataUnsafe?.user?.id || null;
 
-  bookings.unshift({
-    car: selectedCar.name,
-    client: userName,
-    start: fmt(start),
-    end: fmt(end),
-    price: total.toLocaleString('ru'),
-    days,
-    status: 'new',
-  });
+  const local = {
+    car: selectedCar.name, client: userName,
+    start: fmt(start), end: fmt(end),
+    price: total.toLocaleString('ru'), days, status: 'pending'
+  };
 
+  try {
+    const res = await fetch(`${API}/api/bookings`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        car_id: selectedCar.id, car_name: selectedCar.name,
+        client_name: userName, start_date: fmt(start), end_date: fmt(end),
+        total_price: total, tg_user_id: tgId
+      })
+    });
+    const saved = await res.json();
+    local.id = saved.id;
+  } catch(e) { console.warn('Booking API error:', e.message); }
+
+  bookings.unshift(local);
   closeModal();
   renderRentals();
   renderProfileRentals();
@@ -1072,11 +1154,12 @@ function renderAdminFleet() {
 
 function toggleFleetCar(id, checked) {
   fleetStatus[id] = checked;
-  // Update label style without full re-render to avoid losing checkbox state
   const label = document.querySelector(`[onchange="toggleFleetCar(${id}, this.checked)"]`)?.closest('label');
-  if (label) {
-    label.className = `fleet-col-item ${checked ? 'fc-avail' : 'fc-unavail'}`;
-  }
+  if (label) label.className = `fleet-col-item ${checked ? 'fc-avail' : 'fc-unavail'}`;
+  fetch(`${API}/api/cars/${id}/available`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ available: checked })
+  }).catch(() => {});
   renderCatalog();
   renderPopularCars();
 }
@@ -1084,9 +1167,11 @@ function toggleFleetCar(id, checked) {
 function toggleTransferFleetCar(id, checked) {
   transferFleetStatus[id] = checked;
   const label = document.querySelector(`[onchange="toggleTransferFleetCar(${id}, this.checked)"]`)?.closest('label');
-  if (label) {
-    label.className = `fleet-col-item ${checked ? 'fc-avail' : 'fc-unavail'}`;
-  }
+  if (label) label.className = `fleet-col-item ${checked ? 'fc-avail' : 'fc-unavail'}`;
+  fetch(`${API}/api/cars/transfer/${id}/available`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ available: checked })
+  }).catch(() => {});
   renderTransferCars();
 }
 
@@ -1169,7 +1254,7 @@ function onEditCarPhoto(input) {
   document.getElementById('editCarImgPreview').src = editCarImgUrl;
 }
 
-function saveEditCar() {
+async function saveEditCar() {
   const name  = document.getElementById('editCarName').value.trim();
   const year  = parseInt(document.getElementById('editCarYear').value);
   const trans = document.getElementById('editCarTrans').value;
@@ -1181,15 +1266,16 @@ function saveEditCar() {
     if (!priceT) { showToast('Укажите цену трансфера'); return; }
     const car = TRANSFER_CARS.find(c => c.id === editCarId);
     if (!car) return;
-    car.name = name;
-    car.year = year;
-    car.transmission = trans;
-    car.pricePerHour = priceT;
-    car.type = editCarBodyType;
+    car.name = name; car.year = year; car.transmission = trans;
+    car.pricePerHour = priceT; car.price = priceT; car.type = editCarBodyType;
     if (editCarImgUrl) car.img = editCarImgUrl;
-    closeModal();
-    renderTransferCars();
-    renderAdminFleet();
+    try {
+      await fetch(`${API}/api/cars/transfer/${editCarId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, year, transmission: trans, price_per_hour: priceT, type: editCarBodyType, img: car.img, available: transferFleetStatus[editCarId] !== false })
+      });
+    } catch(e) {}
+    closeModal(); renderTransferCars(); renderAdminFleet();
     showToast('✓ Трансфер обновлён');
   } else {
     const priceRent = parseInt(document.getElementById('editCarPrice').value);
@@ -1197,39 +1283,35 @@ function saveEditCar() {
     if (!priceRent) { showToast('Укажите цену аренды'); return; }
     const car = CARS.find(c => c.id === editCarId);
     if (!car) return;
-    car.name = name;
-    car.year = year;
-    car.transmission = trans;
-    car.trans = trans;
-    car.price = priceRent;
-    car.class = cls;
+    car.name = name; car.year = year; car.transmission = trans; car.trans = trans;
+    car.price = priceRent; car.class = cls;
     if (editCarImgUrl) car.img = editCarImgUrl;
-    closeModal();
-    renderCatalog();
-    renderPopularCars();
-    renderAdminFleet();
+    try {
+      await fetch(`${API}/api/cars/${editCarId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, year, transmission: trans, price: priceRent, class: cls, img: car.img, available: fleetStatus[editCarId] !== false })
+      });
+    } catch(e) {}
+    closeModal(); renderCatalog(); renderPopularCars(); renderAdminFleet();
     showToast('✓ Авто обновлено');
   }
 }
 
-function deleteEditCar() {
+async function deleteEditCar() {
   if (!confirm('Удалить этот автомобиль из парка?')) return;
   if (editCarType === 'transfer') {
     const idx = TRANSFER_CARS.findIndex(c => c.id === editCarId);
     if (idx !== -1) TRANSFER_CARS.splice(idx, 1);
     delete transferFleetStatus[editCarId];
-    closeModal();
-    renderTransferCars();
-    renderAdminFleet();
+    try { await fetch(`${API}/api/cars/transfer/${editCarId}`, { method: 'DELETE' }); } catch(e) {}
+    closeModal(); renderTransferCars(); renderAdminFleet();
     showToast('Авто удалено из трансфера');
   } else {
     const idx = CARS.findIndex(c => c.id === editCarId);
     if (idx !== -1) CARS.splice(idx, 1);
     delete fleetStatus[editCarId];
-    closeModal();
-    renderCatalog();
-    renderPopularCars();
-    renderAdminFleet();
+    try { await fetch(`${API}/api/cars/${editCarId}`, { method: 'DELETE' }); } catch(e) {}
+    closeModal(); renderCatalog(); renderPopularCars(); renderAdminFleet();
     showToast('Авто удалено из парка');
   }
 }
@@ -1277,10 +1359,10 @@ function onNewCarPhoto(input) {
   if (preview) { preview.src = newCarImgUrl; preview.style.display = 'block'; }
 }
 
-function saveNewCar() {
+async function saveNewCar() {
   const name  = document.getElementById('newCarName')?.value.trim();
   const year  = parseInt(document.getElementById('newCarYear')?.value);
-  const trans = document.getElementById('newCarTrans')?.value;
+  const trans = document.getElementById('newCarTrans')?.value || 'АКПП';
   const img   = newCarImgUrl || 'фото машин/Lada Granta.webp';
 
   if (!name || !year) { showToast('Заполните все поля'); return; }
@@ -1288,26 +1370,37 @@ function saveNewCar() {
   if (addCarPriceType === 'transfer') {
     const priceT = parseInt(document.getElementById('newCarTransferPrice')?.value);
     if (!priceT) { showToast('Укажите цену трансфера'); return; }
-    const newId = Math.max(...TRANSFER_CARS.map(c => c.id), 100) + 1;
-    TRANSFER_CARS.push({ id: newId, name, year, transmission: trans || 'АКПП', pricePerHour: priceT, type: newCarBodyType, img });
+    let newId = Math.max(...TRANSFER_CARS.map(c => c.id), 100) + 1;
+    try {
+      const res = await fetch(`${API}/api/cars/transfer`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, year, transmission: trans, price_per_hour: priceT, type: newCarBodyType, img })
+      });
+      const saved = await res.json();
+      newId = saved.id;
+    } catch(e) {}
+    TRANSFER_CARS.push({ id: newId, name, year, transmission: trans, pricePerHour: priceT, price: priceT, type: newCarBodyType, img });
     transferFleetStatus[newId] = true;
     newCarImgUrl = '';
-    closeModal();
-    renderTransferCars();
-    renderAdminFleet();
+    closeModal(); renderTransferCars(); renderAdminFleet();
     showToast('✓ Авто добавлено в трансфер');
   } else {
     const priceRent = parseInt(document.getElementById('newCarPrice')?.value);
-    const cls = document.getElementById('newCarClass')?.value;
+    const cls = document.getElementById('newCarClass')?.value || 'comfort';
     if (!priceRent) { showToast('Укажите цену аренды'); return; }
-    const newId = Math.max(...CARS.map(c => c.id)) + 1;
-    CARS.push({ id: newId, name, year, transmission: trans || 'АКПП', price: priceRent, class: cls || 'comfort', img });
+    let newId = Math.max(...CARS.map(c => c.id)) + 1;
+    try {
+      const res = await fetch(`${API}/api/cars`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, year, transmission: trans, price: priceRent, class: cls, img })
+      });
+      const saved = await res.json();
+      newId = saved.id;
+    } catch(e) {}
+    CARS.push({ id: newId, name, year, transmission: trans, trans, price: priceRent, class: cls, img });
     fleetStatus[newId] = true;
     newCarImgUrl = '';
-    closeModal();
-    renderCatalog();
-    renderPopularCars();
-    renderAdminFleet();
+    closeModal(); renderCatalog(); renderPopularCars(); renderAdminFleet();
     showToast('✓ Авто добавлено в парк');
   }
 }
@@ -1315,7 +1408,7 @@ function saveNewCar() {
 // ===== MAILING =====
 function showMailer() { openModal('mailerModal'); }
 
-function sendMailing() {
+async function sendMailing() {
   const title = document.getElementById('mailerTitle')?.value.trim() || 'Сообщение от администрации';
   const text  = document.getElementById('mailerText')?.value.trim();
   const target = document.getElementById('mailerTarget')?.value || 'all';
@@ -1325,6 +1418,13 @@ function sendMailing() {
   const now = new Date();
   const time = `${now.getDate().toString().padStart(2,'0')}.${(now.getMonth()+1).toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
   messages.unshift({ title, text, time });
+
+  try {
+    await fetch(`${API}/api/messages`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, body: text, target })
+    });
+  } catch(e) { console.warn('Messages API error:', e.message); }
 
   closeModal();
   renderProfileMessages();
