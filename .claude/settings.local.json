@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.procat26reg.ru)",
+      "Bash(ls \"C:\\\\Users\\\\Пользователь\\\\Desktop\\\\Первый проект\\\\\" 2>/dev/null || dir \"C:\\\\Users\\\\Пользователь\\\\Desktop\\\\Первый проект\\\\\")",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git config *)"
+    ]
+  }
+}

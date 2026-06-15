@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Прокат Авто — Ставрополь</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ADMIN PANEL BUTTON -->
+  <button class="admin-btn" id="adminBtn" onclick="showPage('admin')" title="Панель администратора">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor"/>
+      <rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/>
+      <rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+      <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
+    </svg>
+  </button>
+
+  <!-- HOME PAGE -->
+  <div id="page-home" class="page active">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="city-label">СТАВРОПОЛЬ</div>
+      <h1 class="hero-title">ПРОКАТ АВТО<br>В СТАВРОПОЛЕ</h1>
+      <p class="hero-sub">Свежий автопарк · Доставка · 24/7</p>
+      <button class="btn-primary" onclick="showPage('catalog')">Смотреть автопарк</button>
+      <div class="search-wrap" id="searchWrap">
+        <div class="search-bar">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Поиск автомобиля..."
+            autocomplete="off"
+            oninput="onSearchInput(this.value)"
+            onfocus="onSearchInput(this.value)"
+          />
+          <button class="search-clear" id="searchClear" onclick="clearSearch()" style="display:none">✕</button>
+        </div>
+      </div>
+    </div>
+    <div class="section-header">
+      <span class="section-title">ПОПУЛЯРНЫЕ АВТО</span>
+      <button class="section-link" onclick="showPage('catalog')">Все ›</button>
+    </div>
+    <div class="cars-grid" id="popularCars"></div>
+  </div>
+
+  <!-- CATALOG PAGE -->
+  <div id="page-catalog" class="page">
+    <div class="page-title">Каталог авто</div>
+    <div class="filter-tabs" id="filterTabs">
+      <button class="tab active" data-filter="all">Все</button>
+      <button class="tab" data-filter="econom">Эконом</button>
+      <button class="tab" data-filter="comfort">Комфорт</button>
+      <button class="tab" data-filter="comfort-plus">Комфорт+</button>
+      <button class="tab" data-filter="business">Бизнес</button>
+    </div>
+    <div class="filter-row">
+      <div class="filter-select-wrap">
+        <svg class="filter-select-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <select id="transSelect" class="filter-select" onchange="onTransSelect(this.value)">
+          <option value="all">Коробка: Все</option>
+          <option value="akpp">АКПП</option>
+          <option value="mkpp">МКПП</option>
+          <option value="rkpp">РКПП</option>
+          <option value="cvt">CVT</option>
+        </select>
+        <svg class="filter-select-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <button class="trans-sort" id="catalogSortBtn" onclick="toggleSort()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="9" y2="18"/>
+        </svg>
+        Цена
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </div>
+    <div class="cars-list" id="catalogList"></div>
+  </div>
+
+  <!-- TRANSFER PAGE -->
+  <div id="page-transfer" class="page">
+    <div class="page-title">Трансфер</div>
+    <!-- Тип кузова -->
+    <div class="filter-row">
+      <div class="filter-select-wrap">
+        <svg class="filter-select-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        <select id="transferTypeSelect" class="filter-select" onchange="onTransferTypeSelect(this.value)">
+          <option value="all">Тип: Все</option>
+          <option value="sedan">Седан</option>
+          <option value="minivan">Минивэн</option>
+        </select>
+        <svg class="filter-select-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <button class="trans-sort" id="transferSortBtn" onclick="toggleTransferSort()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="9" y2="18"/>
+        </svg>
+        Цена
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </div>
+    <p class="transfer-subtitle" style="padding-top:10px">Цена за час по городу</p>
+    <div class="cars-list" id="transferList"></div>
+  </div>
+
+  <!-- RENTALS PAGE -->
+  <div id="page-rentals" class="page">
+    <div class="page-title">Мои аренды</div>
+    <div class="rentals-list" id="rentalsList"></div>
+  </div>
+
+  <!-- PROFILE PAGE -->
+  <div id="page-profile" class="page">
+    <div class="profile-avatar" id="profileAvatar">?</div>
+    <div class="profile-name" id="profileName">Пользователь</div>
+    <div class="verified-badge unverified" id="verifiedBadge">Неверифицированный аккаунт</div>
+
+    <!-- DOCUMENTS -->
+    <div class="profile-card">
+      <div class="card-label">ДОКУМЕНТЫ</div>
+      <div class="doc-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>Паспорт</span>
+        <span class="doc-status" id="doc-status-passport">Не загружен</span>
+      </div>
+      <div class="doc-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>Прописка</span>
+        <span class="doc-status" id="doc-status-registration">Не загружен</span>
+      </div>
+      <div class="doc-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>Водительские права</span>
+        <span class="doc-status" id="doc-status-license">Не загружен</span>
+      </div>
+      <button class="btn-primary full-width" id="sendDocsBtn" onclick="sendDocsToBot()" style="margin-top:14px">
+        Отправить документы боту
+      </button>
+    </div>
+
+    <!-- MESSAGES FROM ADMIN -->
+    <div class="profile-card" id="profileMessagesCard" style="display:none">
+      <div class="card-label">СООБЩЕНИЯ</div>
+      <div id="profileMessages"></div>
+    </div>
+
+    <!-- ACTIVE RENTALS -->
+    <div class="profile-card">
+      <div class="card-label">АКТИВНЫЕ АРЕНДЫ</div>
+      <div id="profileActiveRentals">
+        <div class="empty-state" style="padding:10px 0">Нет активных аренд</div>
+      </div>
+    </div>
+
+    <!-- ACTIVE TRANSFER -->
+    <div class="profile-card">
+      <div class="card-label">АКТИВНЫЙ ТРАНСФЕР</div>
+      <div id="profileActiveTransfer">
+        <div class="empty-state" style="padding:10px 0">Нет активных трансферов</div>
+      </div>
+    </div>
+
+    <!-- HISTORY RENTALS -->
+    <div class="profile-card collapsible" onclick="toggleHistory()">
+      <div class="card-label">ИСТОРИЯ АРЕНД
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="historyArrow">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div id="historyContent" class="history-content" style="display:none">
+        <div class="empty-state" style="padding:10px 0">Нет завершённых аренд</div>
+      </div>
+    </div>
+
+    <!-- HISTORY TRANSFER -->
+    <div class="profile-card collapsible" onclick="toggleTransferHistory()">
+      <div class="card-label">ИСТОРИЯ ТРАНСФЕРА
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="transferHistoryArrow">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div id="transferHistoryContent" class="history-content" style="display:none">
+        <div class="empty-state" style="padding:10px 0">Нет завершённых трансферов</div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="profile-card">
+      <div class="card-label">НАСТРОЙКИ</div>
+      <div class="setting-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span>Уведомления</span>
+        <div class="toggle active" id="notifToggle" onclick="toggleNotif()">
+          <div class="toggle-thumb"></div>
+        </div>
+      </div>
+      <div class="setting-item" onclick="showTerms()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>Условия аренды</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="setting-item" onclick="showSupport()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg>
+        <span>Поддержка</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+
+    <!-- CONTACT BLOCK -->
+    <div class="profile-card contact-card">
+      <div class="card-label">СВЯЗАТЬСЯ С ПУНКТОМ ВЫДАЧИ</div>
+      <div class="contact-phone-num">+7 962 265-55-55</div>
+      <div class="contact-btns">
+        <button class="contact-btn contact-btn-call" onclick="callPhone()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.69 12 19.79 19.79 0 011.61 3.41 2 2 0 013.6 1.22h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L7.91 8.8a16 16 0 006.29 6.29l.95-.95a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
+          </svg>
+          Позвонить
+        </button>
+        <button class="contact-btn contact-btn-tg" onclick="openTelegram()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M11.944 0A12 12 0 1 0 24 12 12 12 0 0 0 11.944 0zm6.067 6.82l-2.04 9.613c-.15.669-.54.832-1.095.517l-3.024-2.228-1.46 1.406c-.162.162-.297.297-.608.297l.216-3.077 5.59-5.048c.243-.216-.054-.33-.378-.114L7.16 13.41l-3-.946c-.649-.203-.663-.649.136-.96l11.73-4.523c.541-.194 1.014.133.84.947h.005z"/>
+          </svg>
+          Telegram
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN PAGE -->
+  <div id="page-admin" class="page admin-page">
+    <div class="admin-header">
+      <div>
+        <div class="admin-title">Панель управления</div>
+      </div>
+      <div class="admin-user">
+        <div>
+          <div class="au-name">Администратор</div>
+          <div class="au-role">Управление</div>
+        </div>
+        <div class="notif-dot">🔔</div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Активных аренд</div>
+        <div class="stat-value" id="statActiveRentals">0</div>
+      </div>
+      <div class="stat-card highlight">
+        <div class="stat-label">Выручка (аренды)</div>
+        <div class="stat-value" id="statRevenue">0 ₽</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Заявок трансфер</div>
+        <div class="stat-value" id="statTransfers">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Новых заявок</div>
+        <div class="stat-value" id="statNewBookings">0</div>
+      </div>
+    </div>
+
+    <div class="admin-section-title">ВЕРИФИКАЦИЯ КЛИЕНТОВ</div>
+    <div class="bookings-table" id="adminVerificationList">
+      <div class="empty-state" style="padding:16px">Нет заявок на верификацию</div>
+    </div>
+
+    <div class="admin-section-title">ЗАЯВКИ НА АРЕНДУ</div>
+    <div class="bookings-table" id="adminBookingList">
+      <div class="empty-state" style="padding:16px">Нет заявок на аренду</div>
+    </div>
+
+    <div class="admin-section-title">ЗАЯВКИ НА ТРАНСФЕР</div>
+    <div class="bookings-table" id="adminTransferList">
+      <div class="empty-state" style="padding:16px">Нет заявок на трансфер</div>
+    </div>
+
+    <div class="admin-section-title">СТАТУС АВТОПАРКА</div>
+    <div class="bookings-table" id="adminFleetList" style="padding:4px 0"></div>
+    <div class="fleet-legend" style="margin-top:8px">
+      <span><span class="dot free-dot"></span>В наличии</span>
+      <span><span class="dot rented-dot"></span>Нет в наличии</span>
+    </div>
+
+    <div class="admin-section-title">БЫСТРЫЕ ДЕЙСТВИЯ</div>
+    <div class="quick-actions">
+      <button class="qa-btn" onclick="showAddCar()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Добавить авто
+      </button>
+      <button class="qa-btn" onclick="showMailer()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Рассылка
+      </button>
+      <button class="qa-btn" onclick="showReport()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Отчёт
+      </button>
+    </div>
+
+    <button class="back-from-admin" onclick="showPage('home')">← Вернуться на главную</button>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="nav-item active" data-page="home" onclick="showPage('home')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Главная</span>
+    </button>
+    <button class="nav-item" data-page="catalog" onclick="showPage('catalog')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      <span>Каталог</span>
+    </button>
+    <button class="nav-item" data-page="transfer" onclick="showPage('transfer')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      <span>Трансфер</span>
+    </button>
+    <button class="nav-item" data-page="rentals" onclick="showPage('rentals')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Аренды</span>
+    </button>
+    <button class="nav-item" data-page="profile" onclick="showPage('profile')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Профиль</span>
+    </button>
+  </nav>
+
+  <!-- MODALS -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+
+  <!-- Date Modal -->
+  <div class="modal" id="dateModal">
+    <div class="modal-title">Выберите даты аренды</div>
+    <div class="date-inputs">
+      <div class="date-field">
+        <label>Дата начала</label>
+        <input type="date" id="startDate" />
+      </div>
+      <div class="date-field">
+        <label>Дата окончания</label>
+        <input type="date" id="endDate" />
+      </div>
+    </div>
+    <button class="btn-primary full-width" onclick="applyDates()">Применить</button>
+    <button class="btn-secondary full-width" onclick="closeModal()">Отмена</button>
+  </div>
+
+  <!-- Transfer Modal -->
+  <div class="modal" id="transferModal">
+    <div class="modal-title" id="transferModalTitle">Заказать трансфер</div>
+    <div class="transfer-car-info" id="transferCarInfo"></div>
+    <div class="transfer-form">
+      <div class="tf-field">
+        <label>Откуда</label>
+        <input type="text" placeholder="Адрес подачи" id="fromAddr" />
+      </div>
+      <div class="tf-field">
+        <label>Куда</label>
+        <input type="text" placeholder="Адрес назначения" id="toAddr" />
+      </div>
+      <div class="tf-field">
+        <label>Время подачи</label>
+        <input type="datetime-local" id="transferStart" />
+      </div>
+    </div>
+    <button class="btn-primary full-width" onclick="submitTransfer()">Заказать</button>
+    <button class="btn-secondary full-width" onclick="closeModal()">Отмена</button>
+  </div>
+
+  <!-- Admin Confirm Transfer Modal -->
+  <div class="modal" id="confirmTransferModal">
+    <div class="modal-title">Подтвердить трансфер</div>
+    <div class="transfer-car-info" id="confirmTransferInfo"></div>
+    <div class="transfer-form">
+      <div class="tf-field">
+        <label>Время окончания маршрута</label>
+        <input type="datetime-local" id="confirmTransferEnd" onchange="updateConfirmTotal()" />
+      </div>
+    </div>
+    <div class="booking-total" id="confirmTransferTotal"></div>
+    <button class="btn-primary full-width" onclick="saveConfirmTransfer()">Сохранить и подтвердить</button>
+    <button class="btn-secondary full-width" onclick="closeModal()">Отмена</button>
+  </div>
+
+  <!-- Payment Modal -->
+  <div class="modal" id="paymentModal">
+    <div class="modal-title">Оплата трансфера</div>
+    <div class="payment-amount" id="paymentAmount"></div>
+    <div class="payment-info">
+      <div class="payment-label">Перевод на номер телефона:</div>
+      <div class="payment-phone">+7 962 265-55-55</div>
+      <div class="payment-bank">Тинькофф · Сбербанк</div>
+      <div class="payment-note">В комментарии укажите ваше имя и дату трансфера</div>
+    </div>
+    <div class="receipt-steps">
+      <div class="receipt-step">
+        <div class="step-num">1</div>
+        <div class="step-text">Сделайте перевод на номер выше</div>
+      </div>
+      <div class="receipt-step">
+        <div class="step-num">2</div>
+        <div class="step-text">Сфотографируйте чек из банковского приложения</div>
+      </div>
+      <div class="receipt-step">
+        <div class="step-num">3</div>
+        <div class="step-text">Нажмите кнопку ниже — откроется чат с нашим ботом. Отправьте туда фото чека</div>
+      </div>
+    </div>
+    <button class="btn-primary full-width" onclick="sendReceipt()">Отправить чек боту</button>
+    <button class="btn-secondary full-width" onclick="closeModal()">Закрыть</button>
+  </div>
+
+  <!-- Booking Modal -->
+  <div class="modal" id="bookingModal">
+    <div class="modal-title" id="bookingTitle">Забронировать</div>
+    <div class="booking-car-info" id="bookingCarInfo"></div>
+    <div class="date-inputs">
+      <div class="date-field">
+        <label>Дата начала</label>
+        <input type="date" id="bookStartDate" />
+      </div>
+      <div class="date-field">
+        <label>Дата окончания</label>
+        <input type="date" id="bookEndDate" />
+      </div>
+    </div>
+    <div class="booking-total" id="bookingTotal"></div>
+    <button class="btn-primary full-width" onclick="submitBooking()">Отправить заявку</button>
+    <button class="btn-secondary full-width" onclick="closeModal()">Отмена</button>
+  </div>
+
+  <!-- Add Car Modal -->
+  <div class="modal" id="addCarModal">
+    <div class="modal-title">Добавить авто</div>
+    <div class="transfer-form">
+      <div class="tf-field">
+        <label>Марка и модель</label>
+        <input type="text" id="newCarName" placeholder="Toyota Camry V75" />
+      </div>
+      <div class="tf-field">
+        <label>Год</label>
+        <input type="number" id="newCarYear" placeholder="2023" />
+      </div>
+      <div class="tf-field">
+        <label>Коробка передач</label>
+        <select id="newCarTrans">
+          <option value="АКПП">АКПП</option>
+          <option value="МКПП">МКПП</option>
+          <option value="РКПП">РКПП</option>
+          <option value="CVT">CVT (вариатор)</option>
+        </select>
+      </div>
+      <div class="tf-field">
+        <label>Тип ценообразования</label>
+        <div class="price-type-toggle">
+          <button class="price-type-btn active" data-type="rent" onclick="selectPriceType('rent')">Аренда ₽/сут</button>
+          <button class="price-type-btn" data-type="transfer" onclick="selectPriceType('transfer')">Трансфер ₽/час</button>
+        </div>
+      </div>
+      <div class="tf-field" id="priceRentField">
+        <label>Цена в сутки (₽)</label>
+        <input type="number" id="newCarPrice" placeholder="3500" />
+      </div>
+      <div class="tf-field" id="priceTransferField" style="display:none">
+        <label>Цена за час (₽)</label>
+        <input type="number" id="newCarTransferPrice" placeholder="2500" />
+      </div>
+      <!-- Класс для аренды -->
+      <div class="tf-field" id="classRentField">
+        <label>Класс автомобиля</label>
+        <select id="newCarClass">
+          <option value="econom">Эконом</option>
+          <option value="comfort" selected>Комфорт</option>
+          <option value="comfort-plus">Комфорт+</option>
+          <option value="business">Бизнес</option>
+        </select>
+      </div>
+      <!-- Тип кузова для трансфера -->
+      <div class="tf-field" id="classTransferField" style="display:none">
+        <label>Тип кузова</label>
+        <div class="price-type-toggle">
+          <button class="price-type-btn active" data-body="sedan" onclick="selectBodyType('sedan')">Седан</button>
+          <button class="price-type-btn" data-body="minivan" onclick="selectBodyType('minivan')">Минивэн</button>
+        </div>
+      </div>
+      <div class="tf-field">
+        <label>Фото автомобиля</label>
+        <label class="photo-upload-label">
+          <input type="file" accept="image/*" onchange="onNewCarPhoto(this)" style="display:none" />
+          <span class="photo-upload-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Выбрать фото (PNG, JPG, WebP)
+          </span>
+        </label>
+        <img id="newCarImgPreview" style="display:none;width:100%;max-height:120px;object-fit:cover;border-radius:10px;margin-top:8px;border:1px solid var(--border)" />
+      </div>
+    </div>
+    <button class="btn-primary full-width" onclick="saveNewCar()">Добавить</button>
+    <button class="btn-secondary full-width" onclick="closeModal()">Отмена</button>
+  </div>
+
+  <!-- Edit Car Modal -->
+  <div class="modal" id="editCarModal">
+    <div class="modal-title" id="editCarModalTitle">Редактировать авто</div>
+    <div class="transfer-form">
+      <div class="tf-field">
+        <label>Марка и модель</label>
+        <input type="text" id="editCarName" placeholder="Toyota Camry V75" />
+      </div>
+      <div class="tf-field">
+        <label>Год</label>
+        <input type="number" id="editCarYear" placeholder="2023" />
+      </div>
+      <div class="tf-field">
+        <label>Коробка передач</label>
+        <select id="editCarTrans">
+          <option value="АКПП">АКПП</option>
+          <option value="МКПП">МКПП</option>
+          <option value="РКПП">РКПП</option>
+          <option value="CVT">CVT (вариатор)</option>
+        </select>
+      </div>
+      <!-- Цена аренды (только для rental) -->
+      <div class="tf-field" id="editPriceRentField">
+        <label>Цена в сутки (₽)</label>
+        <input type="number" id="editCarPrice" placeholder="3500" />
+      </div>
+      <!-- Цена трансфера (только для transfer) -->
+      <div class="tf-field" id="editPriceTransferField" style="display:none">
+        <label>Цена за час (₽)</label>
+        <input type="number" id="editCarTransferPrice" placeholder="2500" />
+      </div>
+      <!-- Класс (только для rental) -->
+      <div class="tf-field" id="editClassRentField">
+        <label>Класс автомобиля</label>
+        <select id="editCarClass">
+          <option value="econom">Эконом</option>
+          <option value="comfort">Комфорт</option>
+          <option value="comfort-plus">Комфорт+</option>
+          <option value="business">Бизнес</option>
+        </select>
+      </div>
+      <!-- Тип кузова (только для transfer) -->
+      <div class="tf-field" id="editClassTransferField" style="display:none">
+        <label>Тип кузова</label>
+        <div class="price-type-toggle">
+          <button class="price-type-btn" data-editbody="sedan" onclick="selectEditBodyType('sedan')">Седан</button>
+          <button class="price-type-btn" data-editbody="minivan" onclick="selectEditBodyType('minivan')">Минивэн</button>
+        </div>
+      </div>
+      <div class="tf-field">
+        <label>Фото автомобиля</label>
+        <label class="photo-upload-label">
+          <input type="file" accept="image/*" onchange="onEditCarPhoto(this)" style="display:none" />
+          <span class="photo-upload-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Сменить фото
+          </span>
+        </label>
+        <img id="editCarImgPreview" style="width:100%;max-height:120px;object-fit:cover;border-radius:10px;margin-top:8px;border:1px solid var(--border)" />
+      </div>
+    </div>
+    <button class="btn-primary full-width" onclick="saveEditCar()">Сохранить изменения</button>
+    <button class="btn-danger full-width" onclick="deleteEditCar()" style="margin-top:8px">Удалить автомобиль</button>
+    <button class="btn-secondary full-width" onclick="closeModal()" style="margin-top:8px">Отмена</button>
+  </div>
+
+  <!-- Report Modal -->
+  <div class="modal" id="reportModal">
+    <div class="modal-title">Отчёт</div>
+    <div class="report-stats">
+      <div class="rs-item"><span>Активных аренд</span><b id="reportActive">—</b></div>
+      <div class="rs-item"><span>Новых заявок</span><b id="reportNew">—</b></div>
+      <div class="rs-item"><span>Выручка (аренды)</span><b id="reportRevenue">—</b></div>
+      <div class="rs-item"><span>Средний чек</span><b id="reportAvg">—</b></div>
+      <div class="rs-item"><span>Заявок трансфер</span><b id="reportTransfers">—</b></div>
+      <div class="rs-item"><span>Выручка (трансфер)</span><b id="reportTransferRevenue">—</b></div>
+    </div>
+    <button class="btn-secondary full-width" onclick="closeModal()">Закрыть</button>
+  </div>
+
+  <!-- Mailer Modal -->
+  <div class="modal" id="mailerModal">
+    <div class="modal-title">Рассылка клиентам</div>
+    <div class="transfer-form">
+      <div class="tf-field">
+        <label>Кому</label>
+        <select id="mailerTarget">
+          <option value="all">Всем клиентам</option>
+          <option value="active">Активным</option>
+          <option value="done">Завершившим аренду</option>
+        </select>
+      </div>
+      <div class="tf-field">
+        <label>Заголовок</label>
+        <input type="text" id="mailerTitle" placeholder="Специальное предложение!" />
+      </div>
+      <div class="tf-field">
+        <label>Текст сообщения</label>
+        <textarea id="mailerText" placeholder="Введите текст..." rows="4"></textarea>
+      </div>
+    </div>
+    <button class="btn-primary full-width" onclick="sendMailing()">Отправить</button>
+    <button class="btn-secondary full-width" onclick="closeModal()">Отмена</button>
+  </div>
+
+  <!-- Terms Modal -->
+  <div class="modal" id="termsModal">
+    <div class="modal-title">Условия аренды</div>
+    <div class="terms-content">
+      <div class="terms-section">
+        <div class="terms-heading">1. Общие положения</div>
+        <p>Аренда автомобилей осуществляется компанией ПрокатАвто26 (г. Ставрополь). Настоящие условия являются договором между арендатором и арендодателем.</p>
+      </div>
+      <div class="terms-section">
+        <div class="terms-heading">2. Требования к арендатору</div>
+        <ul>
+          <li>Возраст от 21 года</li>
+          <li>Водительский стаж не менее 2 лет</li>
+          <li>Действующее водительское удостоверение категории B</li>
+          <li>Паспорт гражданина РФ</li>
+          <li>Пройденная верификация документов</li>
+        </ul>
+      </div>
+      <div class="terms-section">
+        <div class="terms-heading">3. Условия оплаты</div>
+        <ul>
+          <li>Оплата производится до получения автомобиля</li>
+          <li>Принимается наличный и безналичный расчёт</li>
+          <li>Залог составляет от 5 000 до 20 000 ₽ в зависимости от класса авто</li>
+          <li>Залог возвращается при возврате автомобиля без повреждений</li>
+        </ul>
+      </div>
+      <div class="terms-section">
+        <div class="terms-heading">4. Условия использования</div>
+        <ul>
+          <li>Автомобиль выдаётся с полным баком, возвращается с полным баком</li>
+          <li>Курение в салоне — штраф 3 000 ₽</li>
+          <li>Выезд за пределы Ставропольского края — только с разрешения</li>
+          <li>Субаренда третьим лицам запрещена</li>
+          <li>При ДТП немедленно сообщить в компанию и вызвать ГИБДД</li>
+        </ul>
+      </div>
+      <div class="terms-section">
+        <div class="terms-heading">5. Возврат автомобиля</div>
+        <ul>
+          <li>Возврат в согласованное время и место</li>
+          <li>Опоздание свыше 1 часа — оплата дополнительных суток</li>
+          <li>Автомобиль должен быть в чистом состоянии</li>
+        </ul>
+      </div>
+      <div class="terms-section">
+        <div class="terms-heading">6. Ответственность</div>
+        <p>Арендатор несёт полную материальную ответственность за ущерб, причинённый автомобилю в период аренды, включая ущерб от ДТП, хищение и вандализм.</p>
+      </div>
+    </div>
+    <button class="btn-secondary full-width" onclick="closeModal()">Закрыть</button>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Search dropdown (body-level to escape stacking contexts) -->
+  <div class="search-dropdown" id="searchDropdown" style="display:none"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
