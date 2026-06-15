@@ -48,10 +48,9 @@ router.patch('/:id/status', async (req, res) => {
     );
     const transfer = rows[0];
     // Уведомить клиента
-    if (status === 'confirmed')     bot.clientTransferConfirmed(transfer).catch(() => {});
-    if (status === 'declined')      bot.clientTransferDeclined(transfer).catch(() => {});
-    if (status === 'receipt_sent')  bot.adminReceiptSent(transfer).catch(() => {});
-    if (status === 'paid')          bot.clientReceiptConfirmed(transfer).catch(() => {});
+    if (status === 'confirmed')        bot.clientTransferConfirmed(transfer).catch(() => {});
+    if (status === 'declined')         bot.clientTransferDeclined(transfer).catch(() => {});
+    if (status === 'paid')             bot.clientReceiptConfirmed(transfer).catch(() => {});
     if (status === 'receipt_declined') bot.clientReceiptDeclined(transfer).catch(() => {});
     res.json(transfer);
   } catch(e) { res.status(500).json({ error: e.message }); }

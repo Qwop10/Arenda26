@@ -752,8 +752,8 @@ function renderAdminTransfers() {
     return;
   }
 
-  const statusLabel = { pending: 'Новый', confirmed: 'Подтверждён', receipt_sent: 'Чек', paid: 'Оплачено', declined: 'Отклонён' };
-  const statusClass = { pending: 'new', confirmed: 'active', receipt_sent: 'new', paid: 'active', declined: 'done' };
+  const statusLabel = { pending: 'Новый', confirmed: 'Подтверждён', receipt_sent: 'Чек', receipt_declined: 'Чек отклонён', paid: 'Оплачено', declined: 'Отклонён' };
+  const statusClass = { pending: 'new', confirmed: 'active', receipt_sent: 'new', receipt_declined: 'done', paid: 'active', declined: 'done' };
 
   container.innerHTML = transferBookings.map((t, i) => `
     <div class="tr-row${t.status === 'declined' || t.status === 'paid' ? ' tr-row--faded' : ''}">
@@ -771,14 +771,19 @@ function renderAdminTransfers() {
           <button class="btn-confirm" onclick="openConfirmTransferModal(${i})">✓ Подтвердить</button>
           <button class="btn-icon-decline" onclick="declineTransfer(${i})" title="Отклонить">✕</button>
         </div>` : ''}
-      ${t.status === 'receipt_sent' ? `
-        ${t.receipt_url ? `<img src="${t.receipt_url}" onclick="openDocPhoto('${t.receipt_url}')" style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;margin-top:8px;cursor:pointer">` : ''}
+      ${t.status === 'receipt_sent' || t.status === 'receipt_declined' ? `
+        ${t.receipt_url ? `<img src="${t.receipt_url}" data-verifid="${i}" class="verif-doc-img" style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;margin-top:8px;cursor:pointer">` : ''}
+        ${t.status === 'receipt_sent' ? `
         <div class="bt-actions" style="margin-top:8px">
           <button class="btn-icon-confirm" onclick="confirmPayment(${i})" title="Оплата получена">✓</button>
           <button class="btn-icon-decline" onclick="rejectPayment(${i})" title="Отклонить чек">✕</button>
-        </div>` : ''}
+        </div>` : `<div style="font-size:12px;color:var(--text-muted);margin-top:6px">Ожидаем новый чек от клиента</div>`}` : ''}
     </div>
   `).join('');
+
+  container.querySelectorAll('.verif-doc-img').forEach(img => {
+    img.addEventListener('click', () => openDocPhoto(img.src));
+  });
 }
 
 function openConfirmTransferModal(index) {
@@ -871,18 +876,32 @@ async function declineTransfer(index) {
   showToast('Трансфер отклонён');
 }
 
-function confirmPayment(index) {
+async function confirmPayment(index) {
+  const t = transferBookings[index];
+  try {
+    await fetch(`${API}/api/transfers/${t.id}/status`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'paid' })
+    });
+  } catch(e) {}
   transferBookings[index].status = 'paid';
   renderAdminTransfers();
   renderProfileTransfer();
   showToast('✓ Оплата подтверждена');
 }
 
-function rejectPayment(index) {
-  transferBookings[index].status = 'confirmed';
+async function rejectPayment(index) {
+  const t = transferBookings[index];
+  try {
+    await fetch(`${API}/api/transfers/${t.id}/status`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'receipt_declined' })
+    });
+  } catch(e) {}
+  transferBookings[index].status = 'receipt_declined';
   renderAdminTransfers();
   renderProfileTransfer();
-  showToast('Чек отклонён — клиент должен оплатить повторно');
+  showToast('Чек отклонён — клиент должен загрузить повторно');
 }
 
 // ===== PAYMENT MODAL =====
@@ -943,7 +962,7 @@ function renderProfileTransfer() {
   if (!container) return;
 
   const tgId = String(tg?.initDataUnsafe?.user?.id || '');
-  const activeStatuses = ['pending', 'confirmed', 'receipt_sent', 'declined'];
+  const activeStatuses = ['pending', 'confirmed', 'receipt_sent', 'receipt_declined', 'declined'];
   const active = transferBookings.filter(t =>
     activeStatuses.includes(t.status) && (!tgId || String(t.tg_user_id) === tgId)
   );
@@ -966,6 +985,11 @@ function renderProfileTransfer() {
     } else if (t.status === 'receipt_sent') {
       statusBadge = `<span class="status-badge new">Чек отправлен</span>`;
       actionBtn = `<div style="font-size:11px;color:var(--text-muted);margin-top:4px;text-align:right">Ожидайте<br>проверки</div>`;
+    } else if (t.status === 'paid') {
+      statusBadge = `<span class="status-badge active">Оплачено ✓</span>`;
+    } else if (t.status === 'receipt_declined') {
+      statusBadge = `<span class="status-badge done">Чек отклонён</span>`;
+      actionBtn = `<button class="pay-btn" style="background:var(--accent)" onclick="openPaymentModal(${realIndex})">Загрузить чек повторно</button>`;
     } else if (t.status === 'declined') {
       statusBadge = `<span class="status-badge done">Отклонён</span>`;
     }
@@ -1642,7 +1666,7 @@ function renderHistoryTransfers() {
   const content = document.getElementById('transferHistoryContent');
   if (!content) return;
   const tgId = String(tg?.initDataUnsafe?.user?.id || '');
-  const doneStatuses = ['paid', 'declined'];
+  const doneStatuses = ['paid', 'declined', 'receipt_declined'];
   const history = transferBookings.filter(t =>
     doneStatuses.includes(t.status) && (!tgId || String(t.tg_user_id) === tgId)
   );
