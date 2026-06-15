@@ -408,8 +408,8 @@ function renderRentals() {
   if (myTransfers.length === 0) {
     trContainer.innerHTML = '<div class="empty-state">У вас пока нет трансферов</div>';
   } else {
-    const statusLabel = { pending: 'Ожидает', confirmed: 'Подтверждён', receipt_sent: 'Чек отправлен', paid: 'Оплачено', declined: 'Отклонён' };
-    const statusClass = { pending: 'new', confirmed: 'active', receipt_sent: 'new', paid: 'active', declined: 'done' };
+    const statusLabel = { pending: 'Ожидает', confirmed: 'Подтверждён', receipt_sent: 'Чек отправлен', receipt_declined: 'Чек отклонён', paid: 'Оплачено ✓', declined: 'Отклонён' };
+    const statusClass = { pending: 'new', confirmed: 'active', receipt_sent: 'new', receipt_declined: 'done', paid: 'active', declined: 'done' };
     trContainer.innerHTML = myTransfers.map((t, i) => {
       const realIndex = transferBookings.indexOf(t);
       return `
@@ -420,8 +420,11 @@ function renderRentals() {
         </div>
         <div class="rental-dates">${t.from} → ${t.to}</div>
         <div class="rental-dates">Подача: ${t.startTime}</div>
-        ${t.price ? `<div class="rental-price">${t.price} ₽</div>` : ''}
+        ${t.price ? `<div class="rental-price">${Number(t.price).toLocaleString('ru')} ₽</div>` : ''}
         ${t.status === 'confirmed' ? `<button class="btn-primary full-width" style="margin-top:8px;padding:9px" onclick="openPaymentModal(${realIndex})">Оплатить</button>` : ''}
+        ${t.status === 'receipt_declined' ? `
+          <div style="font-size:12px;color:var(--text-muted);margin-top:6px">Чек не принят — загрузите корректный чек</div>
+          <button class="btn-primary full-width" style="margin-top:8px;padding:9px" onclick="openPaymentModal(${realIndex})">Загрузить чек повторно</button>` : ''}
       </div>`;
     }).join('');
   }
