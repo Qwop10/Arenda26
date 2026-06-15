@@ -365,7 +365,8 @@ function getBookingDisplayStatus(b) {
   if (b.status === 'pending' || b.status === 'new') return { label: 'Ожидает', cls: 'new' };
   if (b.status === 'confirmed') return { label: 'Подтверждена', cls: 'active' };
   if (b.status === 'declined') return { label: 'Отклонена', cls: 'done' };
-  if (b.status === 'returned') return { label: 'Возврат', cls: 'done' };
+  if (b.status === 'returned') return { label: 'Досрочный возврат', cls: 'done' };
+  if (b.status === 'completed') return { label: 'Завершена', cls: 'done' };
   try {
     const parts = b.end.split('.');
     if (parts.length === 3) {
@@ -815,7 +816,7 @@ function updateConfirmTotal() {
   totalEl.textContent = `Итого: ${hours} ч. × ${t.pricePerHour.toLocaleString('ru')} ₽ = ${total.toLocaleString('ru')} ₽`;
 }
 
-function saveConfirmTransfer() {
+async function saveConfirmTransfer() {
   if (confirmingTransferIndex === null) return;
   const t = transferBookings[confirmingTransferIndex];
   const endVal = document.getElementById('confirmTransferEnd').value;
@@ -836,14 +837,17 @@ function saveConfirmTransfer() {
   if (end <= start) { showToast('Неверное время окончания'); return; }
 
   const hours = Math.ceil((end - start) / (1000 * 60 * 60));
-  const total = hours * t.pricePerHour;
+  const total = hours * (t.pricePerHour || 0);
+
+  try {
+    await fetch(`${API}/api/transfers/${t.id}/status`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'confirmed', total_price: total })
+    });
+  } catch(e) { console.warn('Transfer confirm error:', e.message); }
 
   transferBookings[confirmingTransferIndex] = {
-    ...t,
-    endTime: fmt(endVal),
-    hours,
-    price: total.toLocaleString('ru'),
-    status: 'confirmed',
+    ...t, endTime: fmt(endVal), hours, price: total, status: 'confirmed',
   };
 
   confirmingTransferIndex = null;
@@ -853,7 +857,14 @@ function saveConfirmTransfer() {
   showToast('✓ Трансфер подтверждён');
 }
 
-function declineTransfer(index) {
+async function declineTransfer(index) {
+  const t = transferBookings[index];
+  try {
+    await fetch(`${API}/api/transfers/${t.id}/status`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'declined' })
+    });
+  } catch(e) {}
   transferBookings[index].status = 'declined';
   renderAdminTransfers();
   renderProfileTransfer();
@@ -1129,7 +1140,8 @@ function renderAdminBookings() {
         </div>` : ''}
       ${b.status === 'confirmed' || b.status === 'active' ? `
         <div class="bt-actions" style="margin-top:8px">
-          <button class="btn-confirm" onclick="earlyReturnBooking(${i})">↩ Досрочный возврат</button>
+          <button class="btn-confirm" onclick="completeBooking(${i})">✓ Завершить</button>
+          <button class="btn-confirm" style="background:rgba(255,160,0,0.15);color:#ffa000;border-color:#ffa000" onclick="earlyReturnBooking(${i})">↩ Досрочно</button>
         </div>` : ''}
     </div>
   `}).join('');
@@ -1159,6 +1171,19 @@ async function declineAdminBooking(index) {
   bookings[index].status = 'declined';
   renderAdminBookings(); updateAdminStats(); renderRentals(); renderProfileRentals();
   showToast('Аренда отклонена');
+}
+
+async function completeBooking(index) {
+  const b = bookings[index];
+  try {
+    await fetch(`${API}/api/bookings/${b.id}/status`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'completed' })
+    });
+  } catch(e) {}
+  bookings[index].status = 'completed';
+  renderAdminBookings(); updateAdminStats(); renderRentals(); renderProfileRentals();
+  showToast('✓ Аренда завершена');
 }
 
 async function earlyReturnBooking(index) {
