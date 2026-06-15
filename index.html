@@ -424,14 +424,15 @@
       </div>
       <div class="receipt-step">
         <div class="step-num">2</div>
-        <div class="step-text">Сфотографируйте чек из банковского приложения</div>
-      </div>
-      <div class="receipt-step">
-        <div class="step-num">3</div>
-        <div class="step-text">Нажмите кнопку ниже — откроется чат с нашим ботом. Отправьте туда фото чека</div>
+        <div class="step-text">Сфотографируйте чек и загрузите ниже</div>
       </div>
     </div>
-    <button class="btn-primary full-width" onclick="sendReceipt()">Отправить чек боту</button>
+    <label class="doc-upload-btn" style="display:block;text-align:center;margin-bottom:10px">
+      📷 Выбрать фото чека
+      <input type="file" accept="image/*" capture="environment" id="receiptFileInput" onchange="onReceiptFileChange(this)" style="display:none">
+    </label>
+    <img id="receiptPreview" src="" alt="" style="display:none;width:100%;max-height:160px;object-fit:cover;border-radius:10px;margin-bottom:10px">
+    <button class="btn-primary full-width" id="sendReceiptBtn" onclick="sendReceipt()" disabled>Отправить чек</button>
     <button class="btn-secondary full-width" onclick="closeModal()">Закрыть</button>
   </div>
 

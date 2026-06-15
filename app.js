@@ -723,6 +723,7 @@ function renderAdminTransfers() {
           <button class="btn-icon-decline" onclick="declineTransfer(${i})" title="Отклонить">✕</button>
         </div>` : ''}
       ${t.status === 'receipt_sent' ? `
+        ${t.receipt_url ? `<img src="${t.receipt_url}" onclick="openDocPhoto('${t.receipt_url}')" style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;margin-top:8px;cursor:pointer">` : ''}
         <div class="bt-actions" style="margin-top:8px">
           <button class="btn-icon-confirm" onclick="confirmPayment(${i})" title="Оплата получена">✓</button>
           <button class="btn-icon-decline" onclick="rejectPayment(${i})" title="Отклонить чек">✕</button>
@@ -834,18 +835,46 @@ function openPaymentModal(index) {
   openModal('paymentModal');
 }
 
-function sendReceipt() {
-  if (payingTransferIndex !== null) {
+let receiptImageBase64 = null;
+
+function onReceiptFileChange(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    receiptImageBase64 = e.target.result;
+    const preview = document.getElementById('receiptPreview');
+    if (preview) { preview.src = e.target.result; preview.style.display = 'block'; }
+    const btn = document.getElementById('sendReceiptBtn');
+    if (btn) btn.disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function sendReceipt() {
+  if (!receiptImageBase64) { showToast('Выберите фото чека'); return; }
+  const btn = document.getElementById('sendReceiptBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Отправка...'; }
+
+  try {
+    const t = transferBookings[payingTransferIndex];
+    await fetch(`${API}/api/transfers/${t.id}/receipt`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ receipt_url: receiptImageBase64 })
+    });
+
     transferBookings[payingTransferIndex].status = 'receipt_sent';
     renderProfileTransfer();
     renderAdminTransfers();
+    closeModal();
+    receiptImageBase64 = null;
+    tg?.HapticFeedback?.notificationOccurred('success');
+    showToast('✓ Чек отправлен, ожидайте подтверждения');
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Отправить чек'; }
+    showToast('Ошибка отправки, попробуйте снова');
   }
-  closeModal();
-  if (tg) {
-    tg.openTelegramLink('https://t.me/ВАШ_БОТ');
-    tg.HapticFeedback?.notificationOccurred('success');
-  }
-  showToast('✓ Открываем чат с ботом — отправьте туда фото чека');
 }
 
 // ===== RENDER PROFILE TRANSFER =====
