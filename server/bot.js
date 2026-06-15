@@ -20,6 +20,17 @@ async function sendToAdmins(text) {
 
 // ===== АРЕНДА =====
 
+async function clientBookingReceived(b) {
+  await send(b.tg_user_id,
+    `🚗 <b>Заявка принята!</b>\n\n` +
+    `🚘 Автомобиль: ${b.car_name}\n` +
+    `📅 Начало аренды: ${b.start_date}\n` +
+    `📅 Конец аренды: ${b.end_date}\n` +
+    `💰 Сумма: ${Number(b.total_price).toLocaleString('ru')} ₽\n\n` +
+    `Ожидайте подтверждения от менеджера.`
+  );
+}
+
 async function adminNewBooking(b) {
   await sendToAdmins(
     `🚗 <b>Новая заявка на аренду</b>\n\n` +
@@ -40,6 +51,15 @@ async function clientBookingConfirmed(b) {
   );
 }
 
+async function clientEarlyReturn(b) {
+  await send(b.tg_user_id,
+    `✅ <b>Досрочный возврат подтверждён!</b>\n\n` +
+    `🚘 ${b.car_name}\n\n` +
+    `Спасибо, что использовали наш сервис! Будем рады видеть вас снова.\n\n` +
+    `Пожалуйста, оставьте отзыв в нашей группе 🙏`
+  );
+}
+
 async function clientBookingDeclined(b) {
   await send(b.tg_user_id,
     `❌ <b>Заявка отклонена</b>\n\n` +
@@ -50,6 +70,16 @@ async function clientBookingDeclined(b) {
 }
 
 // ===== ТРАНСФЕР =====
+
+async function clientTransferReceived(t) {
+  await send(t.tg_user_id,
+    `🚕 <b>Заявка на трансфер принята!</b>\n\n` +
+    `🚘 Автомобиль: ${t.car_name}\n` +
+    `📍 Маршрут: ${t.route}\n` +
+    `🕐 Дата и время подачи: ${t.date}\n\n` +
+    `Ожидайте подтверждения от менеджера.`
+  );
+}
 
 async function adminNewTransfer(t) {
   await sendToAdmins(
@@ -144,9 +174,12 @@ async function broadcast(userIds, title, body) {
 }
 
 module.exports = {
+  clientBookingReceived,
   adminNewBooking,
+  clientEarlyReturn,
   clientBookingConfirmed,
   clientBookingDeclined,
+  clientTransferReceived,
   adminNewTransfer,
   clientTransferConfirmed,
   clientTransferDeclined,

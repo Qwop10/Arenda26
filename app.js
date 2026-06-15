@@ -943,7 +943,7 @@ function renderProfileTransfer() {
   if (!container) return;
 
   const tgId = String(tg?.initDataUnsafe?.user?.id || '');
-  const activeStatuses = ['pending', 'confirmed', 'receipt_sent'];
+  const activeStatuses = ['pending', 'confirmed', 'receipt_sent', 'declined'];
   const active = transferBookings.filter(t =>
     activeStatuses.includes(t.status) && (!tgId || String(t.tg_user_id) === tgId)
   );
@@ -966,6 +966,8 @@ function renderProfileTransfer() {
     } else if (t.status === 'receipt_sent') {
       statusBadge = `<span class="status-badge new">Чек отправлен</span>`;
       actionBtn = `<div style="font-size:11px;color:var(--text-muted);margin-top:4px;text-align:right">Ожидайте<br>проверки</div>`;
+    } else if (t.status === 'declined') {
+      statusBadge = `<span class="status-badge done">Отклонён</span>`;
     }
 
     return `
@@ -989,6 +991,7 @@ function toggleTransferHistory() {
   const content = document.getElementById('transferHistoryContent');
   const arrow = document.getElementById('transferHistoryArrow');
   if (content.style.display === 'none') {
+    renderHistoryTransfers();
     content.style.display = 'block';
     arrow.style.transform = 'rotate(180deg)';
   } else {
@@ -1607,10 +1610,68 @@ function showReport() {
 }
 
 // ===== PROFILE ACTIONS =====
+function renderHistoryRentals() {
+  const content = document.getElementById('historyContent');
+  if (!content) return;
+  const tgId = String(tg?.initDataUnsafe?.user?.id || '');
+  const doneStatuses = ['completed', 'returned', 'declined'];
+  const history = bookings.filter(b =>
+    doneStatuses.includes(b.status) && (!tgId || String(b.tg_user_id) === tgId)
+  );
+  if (history.length === 0) {
+    content.innerHTML = '<div class="empty-state" style="padding:10px 0">Нет завершённых аренд</div>';
+    return;
+  }
+  const label = { completed: 'Завершена', returned: 'Досрочный возврат', declined: 'Отклонена' };
+  const cls   = { completed: 'done', returned: 'done', declined: 'done' };
+  content.innerHTML = history.map(b => `
+    <div class="rental-item" style="margin-bottom:10px">
+      <div class="ri-left">
+        <div class="ri-name">${b.car}</div>
+        <div class="ri-dates">${b.start} — ${b.end}</div>
+        <div class="ri-price">${b.price} ₽</div>
+      </div>
+      <div class="ri-right">
+        <span class="status-badge ${cls[b.status]}">${label[b.status] || b.status}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderHistoryTransfers() {
+  const content = document.getElementById('transferHistoryContent');
+  if (!content) return;
+  const tgId = String(tg?.initDataUnsafe?.user?.id || '');
+  const doneStatuses = ['paid', 'declined'];
+  const history = transferBookings.filter(t =>
+    doneStatuses.includes(t.status) && (!tgId || String(t.tg_user_id) === tgId)
+  );
+  if (history.length === 0) {
+    content.innerHTML = '<div class="empty-state" style="padding:10px 0">Нет завершённых трансферов</div>';
+    return;
+  }
+  const label = { paid: 'Оплачено', declined: 'Отклонён' };
+  const cls   = { paid: 'active', declined: 'done' };
+  content.innerHTML = history.map(t => `
+    <div class="rental-item" style="margin-bottom:10px">
+      <div class="ri-left">
+        <div class="ri-name">${t.car}</div>
+        <div class="ri-dates">${t.from} → ${t.to}</div>
+        <div class="ri-dates">Подача: ${t.startTime}</div>
+        ${t.price ? `<div class="ri-price">${Number(t.price).toLocaleString('ru')} ₽</div>` : ''}
+      </div>
+      <div class="ri-right">
+        <span class="status-badge ${cls[t.status]}">${label[t.status] || t.status}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
 function toggleHistory() {
   const content = document.getElementById('historyContent');
   const arrow = document.getElementById('historyArrow');
   if (content.style.display === 'none') {
+    renderHistoryRentals();
     content.style.display = 'block';
     arrow.style.transform = 'rotate(180deg)';
   } else {

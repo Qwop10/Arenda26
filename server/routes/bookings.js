@@ -45,6 +45,7 @@ router.patch('/:id/status', async (req, res) => {
     // Уведомить клиента об изменении статуса
     if (status === 'confirmed') bot.clientBookingConfirmed(booking).catch(() => {});
     if (status === 'declined')  bot.clientBookingDeclined(booking).catch(() => {});
+    if (status === 'returned')  bot.clientEarlyReturn(booking).catch(() => {});
     res.json(booking);
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
