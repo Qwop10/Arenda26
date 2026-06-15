@@ -144,30 +144,33 @@ let addCarPriceType = 'rent';
 
 // ===== API INIT =====
 async function initApp() {
-  try {
-    const tgUserId = tg?.initDataUnsafe?.user?.id;
-    const verifUrl = tgUserId ? fetch(`${API}/api/verifications/${tgUserId}`) : Promise.resolve(null);
+  // Загрузка статуса верификации отдельно — чтобы ошибка не ломала весь init
+  const tgUserId = tg?.initDataUnsafe?.user?.id;
+  if (tgUserId) {
+    try {
+      const vr = await fetch(`${API}/api/verifications/${tgUserId}`);
+      const verifData = await vr.json();
+      if (verifData && verifData.status) {
+        docsStatus = verifData.status;
+        updateVerificationBadge();
+        applyVerifStatusToUI(docsStatus);
+      }
+    } catch(e) { console.warn('Verif load error:', e.message); }
+  }
 
-    const [carsRes, trRes, bookRes, trBookRes, msgRes, verifRes] = await Promise.all([
+  try {
+    const [carsRes, trRes, bookRes, trBookRes, msgRes] = await Promise.all([
       fetch(`${API}/api/cars`),
       fetch(`${API}/api/cars/transfer`),
       fetch(`${API}/api/bookings`),
       fetch(`${API}/api/transfers`),
-      fetch(`${API}/api/messages`),
-      verifUrl
+      fetch(`${API}/api/messages`)
     ]);
     const carsData    = await carsRes.json();
     const trData      = await trRes.json();
     const bookData    = await bookRes.json();
     const trBookData  = await trBookRes.json();
     const msgData     = await msgRes.json();
-    const verifData   = verifRes ? await verifRes.json() : null;
-
-    if (verifData) {
-      docsStatus = verifData.status || 'none';
-      updateVerificationBadge();
-      applyVerifStatusToUI(docsStatus);
-    }
 
     CARS.length = 0;
     carsData.forEach(c => {
@@ -213,6 +216,7 @@ async function initApp() {
   renderCatalog();
   renderRentals();
   renderTransferCars();
+  renderAdminVerification();
   renderAdminFleet();
   renderProfileRentals();
   renderProfileMessages();
