@@ -6,7 +6,7 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // Статические файлы фронтенда из корня репозитория
 app.use(express.static(path.join(__dirname, '..')));
@@ -15,7 +15,8 @@ app.use(express.static(path.join(__dirname, '..')));
 app.use('/api/cars',      require('./routes/cars'));
 app.use('/api/bookings',  require('./routes/bookings'));
 app.use('/api/transfers', require('./routes/transfers'));
-app.use('/api/messages',  require('./routes/messages'));
+app.use('/api/messages',       require('./routes/messages'));
+app.use('/api/verifications',  require('./routes/verifications'));
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 

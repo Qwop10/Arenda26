@@ -124,23 +124,48 @@
     <!-- DOCUMENTS -->
     <div class="profile-card">
       <div class="card-label">ДОКУМЕНТЫ</div>
-      <div class="doc-item">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span>Паспорт</span>
-        <span class="doc-status" id="doc-status-passport">Не загружен</span>
+
+      <div class="doc-upload-item">
+        <div class="doc-upload-label">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>Паспорт</span>
+          <span class="doc-status" id="doc-status-passport">Не загружен</span>
+        </div>
+        <label class="doc-upload-btn" id="doc-upload-passport-label">
+          📷 Выбрать фото
+          <input type="file" accept="image/*" capture="environment" id="doc-input-passport" onchange="onDocFileChange('passport', this)" style="display:none">
+        </label>
+        <img class="doc-preview" id="doc-preview-passport" src="" alt="" style="display:none">
       </div>
-      <div class="doc-item">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span>Прописка</span>
-        <span class="doc-status" id="doc-status-registration">Не загружен</span>
+
+      <div class="doc-upload-item">
+        <div class="doc-upload-label">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>Прописка</span>
+          <span class="doc-status" id="doc-status-registration">Не загружен</span>
+        </div>
+        <label class="doc-upload-btn" id="doc-upload-registration-label">
+          📷 Выбрать фото
+          <input type="file" accept="image/*" capture="environment" id="doc-input-registration" onchange="onDocFileChange('registration', this)" style="display:none">
+        </label>
+        <img class="doc-preview" id="doc-preview-registration" src="" alt="" style="display:none">
       </div>
-      <div class="doc-item">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span>Водительские права</span>
-        <span class="doc-status" id="doc-status-license">Не загружен</span>
+
+      <div class="doc-upload-item">
+        <div class="doc-upload-label">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>Водительские права</span>
+          <span class="doc-status" id="doc-status-license">Не загружен</span>
+        </div>
+        <label class="doc-upload-btn" id="doc-upload-license-label">
+          📷 Выбрать фото
+          <input type="file" accept="image/*" capture="environment" id="doc-input-license" onchange="onDocFileChange('license', this)" style="display:none">
+        </label>
+        <img class="doc-preview" id="doc-preview-license" src="" alt="" style="display:none">
       </div>
-      <button class="btn-primary full-width" id="sendDocsBtn" onclick="sendDocsToBot()" style="margin-top:14px">
-        Отправить документы боту
+
+      <button class="btn-primary full-width" id="sendDocsBtn" onclick="submitDocs()" style="margin-top:14px">
+        Отправить документы
       </button>
     </div>
 

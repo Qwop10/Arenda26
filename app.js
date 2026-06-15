@@ -145,18 +145,29 @@ let addCarPriceType = 'rent';
 // ===== API INIT =====
 async function initApp() {
   try {
-    const [carsRes, trRes, bookRes, trBookRes, msgRes] = await Promise.all([
+    const tgUserId = tg?.initDataUnsafe?.user?.id;
+    const verifUrl = tgUserId ? fetch(`${API}/api/verifications/${tgUserId}`) : Promise.resolve(null);
+
+    const [carsRes, trRes, bookRes, trBookRes, msgRes, verifRes] = await Promise.all([
       fetch(`${API}/api/cars`),
       fetch(`${API}/api/cars/transfer`),
       fetch(`${API}/api/bookings`),
       fetch(`${API}/api/transfers`),
-      fetch(`${API}/api/messages`)
+      fetch(`${API}/api/messages`),
+      verifUrl
     ]);
     const carsData    = await carsRes.json();
     const trData      = await trRes.json();
     const bookData    = await bookRes.json();
     const trBookData  = await trBookRes.json();
     const msgData     = await msgRes.json();
+    const verifData   = verifRes ? await verifRes.json() : null;
+
+    if (verifData) {
+      docsStatus = verifData.status || 'none';
+      updateVerificationBadge();
+      applyVerifStatusToUI(docsStatus);
+    }
 
     CARS.length = 0;
     carsData.forEach(c => {
@@ -1519,31 +1530,79 @@ function toggleSort() {
 }
 
 // ===== DOCUMENTS =====
-function sendDocsToBot() {
+const docImages = { passport: null, registration: null, license: null };
+
+function onDocFileChange(type, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    docImages[type] = e.target.result; // base64
+    const preview = document.getElementById('doc-preview-' + type);
+    if (preview) { preview.src = e.target.result; preview.style.display = 'block'; }
+    const status = document.getElementById('doc-status-' + type);
+    if (status) { status.textContent = 'Выбрано'; status.className = 'doc-status loaded'; }
+    const label = document.getElementById('doc-upload-' + type + '-label');
+    if (label) label.textContent = '✓ Изменить фото';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitDocs() {
   if (docsStatus === 'pending') { showToast('Документы уже отправлены, ожидайте проверки'); return; }
   if (docsStatus === 'verified') { showToast('Аккаунт уже верифицирован'); return; }
 
-  docsStatus = 'pending';
+  if (!docImages.passport || !docImages.registration || !docImages.license) {
+    showToast('Загрузите все три документа'); return;
+  }
 
-  ['passport', 'registration', 'license'].forEach(type => {
-    const el = document.getElementById('doc-status-' + type);
-    if (el) { el.textContent = 'На проверке'; el.className = 'doc-status pending'; }
-  });
+  const tgUserId = tg?.initDataUnsafe?.user?.id;
+  if (!tgUserId) { showToast('Не удалось определить пользователя'); return; }
 
   const btn = document.getElementById('sendDocsBtn');
-  if (btn) { btn.textContent = 'Документы на проверке...'; btn.disabled = true; }
+  if (btn) { btn.textContent = 'Отправка...'; btn.disabled = true; }
 
-  updateVerificationBadge();
-
-  const userName = document.getElementById('profileName')?.textContent || 'Пользователь';
-  verificationRequests.unshift({ id: Date.now(), name: userName, status: 'pending' });
-  renderAdminVerification();
-
-  if (tg) {
-    tg.openTelegramLink('https://t.me/ВАШ_БОТ');
-    tg.HapticFeedback?.notificationOccurred('success');
+  try {
+    const userName = document.getElementById('profileName')?.textContent || 'Пользователь';
+    await fetch(`${API}/api/verifications`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tg_user_id: tgUserId,
+        name: userName,
+        passport_img: docImages.passport,
+        registration_img: docImages.registration,
+        license_img: docImages.license
+      })
+    });
+    docsStatus = 'pending';
+    applyVerifStatusToUI('pending');
+    updateVerificationBadge();
+    tg?.HapticFeedback?.notificationOccurred('success');
+    showToast('Документы отправлены на проверку!');
+  } catch(e) {
+    if (btn) { btn.textContent = 'Отправить документы'; btn.disabled = false; }
+    showToast('Ошибка отправки, попробуйте снова');
   }
-  showToast('Открываем бот — отправьте туда фото документов');
+}
+
+function applyVerifStatusToUI(status) {
+  const btn = document.getElementById('sendDocsBtn');
+  if (status === 'pending') {
+    ['passport', 'registration', 'license'].forEach(type => {
+      const el = document.getElementById('doc-status-' + type);
+      if (el && el.textContent !== 'Выбрано') { el.textContent = 'На проверке'; el.className = 'doc-status pending'; }
+    });
+    if (btn) { btn.textContent = 'Документы на проверке...'; btn.disabled = true; }
+  } else if (status === 'verified') {
+    ['passport', 'registration', 'license'].forEach(type => {
+      const el = document.getElementById('doc-status-' + type);
+      if (el) { el.textContent = 'Проверено ✓'; el.className = 'doc-status verified'; }
+    });
+    if (btn) { btn.textContent = 'Аккаунт верифицирован ✓'; btn.disabled = true; }
+  } else if (status === 'rejected') {
+    if (btn) { btn.textContent = 'Отправить документы повторно'; btn.disabled = false; }
+  }
 }
 
 function updateVerificationBadge() {
@@ -1565,11 +1624,17 @@ function updateVerificationBadge() {
 }
 
 // ===== ADMIN VERIFICATION =====
-function renderAdminVerification() {
+async function renderAdminVerification() {
   const container = document.getElementById('adminVerificationList');
   if (!container) return;
 
-  if (verificationRequests.length === 0) {
+  let list = [];
+  try {
+    const res = await fetch(`${API}/api/verifications`);
+    list = await res.json();
+  } catch(e) { list = verificationRequests; }
+
+  if (list.length === 0) {
     container.innerHTML = '<div class="empty-state" style="padding:16px">Нет заявок на верификацию</div>';
     return;
   }
@@ -1577,56 +1642,57 @@ function renderAdminVerification() {
   const statusLabel = { pending: 'Ожидает', verified: 'Верифицирован', rejected: 'Отклонён' };
   const statusClass = { pending: 'new', verified: 'active', rejected: 'done' };
 
-  container.innerHTML = verificationRequests.map((v, i) => `
+  container.innerHTML = list.map(v => `
     <div class="tr-row${v.status !== 'pending' ? ' tr-row--faded' : ''}">
       <div class="tr-top">
         <div class="bt-client">
-          <b>${v.name}</b><br>
-          <small>Паспорт · Прописка · В/у</small>
+          <b>${v.name || 'Пользователь'}</b>
+          <small style="display:block;opacity:0.6">ID: ${v.tg_user_id}</small>
         </div>
-        <span class="status-badge ${statusClass[v.status]}">${statusLabel[v.status]}</span>
+        <span class="status-badge ${statusClass[v.status] || 'new'}">${statusLabel[v.status] || v.status}</span>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        ${v.passport_img ? `<img src="${v.passport_img}" style="width:80px;height:56px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="openDocPhoto('${v.passport_img}')" title="Паспорт">` : ''}
+        ${v.registration_img ? `<img src="${v.registration_img}" style="width:80px;height:56px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="openDocPhoto('${v.registration_img}')" title="Прописка">` : ''}
+        ${v.license_img ? `<img src="${v.license_img}" style="width:80px;height:56px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="openDocPhoto('${v.license_img}')" title="В/у">` : ''}
       </div>
       ${v.status === 'pending' ? `
         <div class="bt-actions" style="margin-top:8px">
-          <button class="btn-icon-confirm" onclick="verifyClient(${i})" title="Верифицировать">✓</button>
-          <button class="btn-icon-decline" onclick="rejectClient(${i})" title="Отклонить">✕</button>
+          <button class="btn-icon-confirm" onclick="verifyClient(${v.id})" title="Верифицировать">✓</button>
+          <button class="btn-icon-decline" onclick="rejectClient(${v.id})" title="Отклонить">✕</button>
         </div>` : ''}
     </div>
   `).join('');
 }
 
-function verifyClient(index) {
-  verificationRequests[index].status = 'verified';
-  docsStatus = 'verified';
-
-  ['passport', 'registration', 'license'].forEach(type => {
-    const el = document.getElementById('doc-status-' + type);
-    if (el) { el.textContent = 'Верифицирован'; el.className = 'doc-status uploaded'; }
-  });
-
-  const btn = document.getElementById('sendDocsBtn');
-  if (btn) btn.style.display = 'none';
-
-  updateVerificationBadge();
-  renderAdminVerification();
-  showToast('✓ Клиент верифицирован');
+function openDocPhoto(src) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = `<img src="${src}" style="max-width:95vw;max-height:90vh;border-radius:10px">`;
+  overlay.onclick = () => overlay.remove();
+  document.body.appendChild(overlay);
 }
 
-function rejectClient(index) {
-  verificationRequests[index].status = 'rejected';
-  docsStatus = 'rejected';
+async function verifyClient(id) {
+  try {
+    await fetch(`${API}/api/verifications/${id}/status`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'verified' })
+    });
+    showToast('✓ Клиент верифицирован');
+    renderAdminVerification();
+  } catch(e) { showToast('Ошибка'); }
+}
 
-  ['passport', 'registration', 'license'].forEach(type => {
-    const el = document.getElementById('doc-status-' + type);
-    if (el) { el.textContent = 'Отклонён'; el.className = 'doc-status'; }
-  });
-
-  const btn = document.getElementById('sendDocsBtn');
-  if (btn) { btn.textContent = 'Отправить документы повторно'; btn.disabled = false; btn.style.display = ''; }
-
-  updateVerificationBadge();
-  renderAdminVerification();
-  showToast('Документы отклонены');
+async function rejectClient(id) {
+  try {
+    await fetch(`${API}/api/verifications/${id}/status`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'rejected' })
+    });
+    showToast('Документы отклонены');
+    renderAdminVerification();
+  } catch(e) { showToast('Ошибка'); }
 }
 
 // ===== MODAL HELPERS =====
