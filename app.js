@@ -144,6 +144,21 @@ let addCarPriceType = 'rent';
 
 // ===== API INIT =====
 async function initApp() {
+  // Восстанавливаем кэш из localStorage чтобы не было мигания при входе
+  try {
+    const cached = localStorage.getItem('appCache');
+    if (cached) {
+      const c = JSON.parse(cached);
+      if (c.CARS) { CARS.length = 0; c.CARS.forEach(x => CARS.push(x)); }
+      if (c.TRANSFER_CARS) { TRANSFER_CARS.length = 0; c.TRANSFER_CARS.forEach(x => TRANSFER_CARS.push(x)); }
+      if (c.bookings) { bookings.length = 0; c.bookings.forEach(x => bookings.push(x)); }
+      if (c.transferBookings) { transferBookings.length = 0; c.transferBookings.forEach(x => transferBookings.push(x)); }
+      if (c.fleetStatus) Object.assign(fleetStatus, c.fleetStatus);
+      if (c.transferFleetStatus) Object.assign(transferFleetStatus, c.transferFleetStatus);
+      renderPopularCars(); renderCatalog(); renderRentals(); renderTransferCars();
+    }
+  } catch(e) {}
+
   // Загрузка статуса верификации отдельно — чтобы ошибка не ломала весь init
   const tgUserId = tg?.initDataUnsafe?.user?.id;
   if (tgUserId) {
@@ -212,6 +227,11 @@ async function initApp() {
   } catch(e) {
     console.warn('API unavailable, using local data:', e.message);
   }
+
+  // Сохраняем в кэш чтобы следующий вход был мгновенным
+  try {
+    localStorage.setItem('appCache', JSON.stringify({ CARS, TRANSFER_CARS, bookings, transferBookings, fleetStatus, transferFleetStatus }));
+  } catch(e) {}
 
   renderPopularCars();
   renderCatalog();
@@ -381,7 +401,9 @@ function getBookingDisplayStatus(b) {
 function renderRentals() {
   const tgId = String(tg?.initDataUnsafe?.user?.id || '');
   const container = document.getElementById('rentalsList');
-  const myBookings = tgId ? bookings.filter(b => String(b.tg_user_id) === tgId) : bookings;
+  const doneStatuses = ['completed', 'returned', 'declined'];
+  const myBookings = (tgId ? bookings.filter(b => String(b.tg_user_id) === tgId) : bookings)
+    .filter(b => !doneStatuses.includes(b.status));
 
   if (myBookings.length === 0) {
     container.innerHTML = '<div class="empty-state">У вас пока нет аренд</div>';
@@ -1230,12 +1252,16 @@ async function earlyReturnBooking(index) {
 }
 
 function updateAdminStats() {
-  const active = bookings.filter(b => b.status === 'active').length;
-  const newCount = bookings.filter(b => b.status === 'new').length;
+  const activeStatuses = ['confirmed', 'active'];
+  const active = bookings.filter(b => activeStatuses.includes(b.status)).length;
+  const newCount = bookings.filter(b => b.status === 'pending' || b.status === 'new').length;
   const revenue = bookings
-    .filter(b => b.status === 'active')
-    .reduce((sum, b) => sum + parseInt(b.price.replace(/\s/g, ''), 10), 0);
-  const transfers = transferBookings.length;
+    .filter(b => ['confirmed', 'active', 'completed', 'returned'].includes(b.status))
+    .reduce((sum, b) => {
+      const val = parseInt(String(b.price).replace(/\s/g, '').replace(/[^\d]/g, ''), 10);
+      return sum + (isNaN(val) ? 0 : val);
+    }, 0);
+  const transfers = transferBookings.filter(t => t.status === 'pending').length;
 
   const el = id => document.getElementById(id);
   if (el('statActiveRentals')) el('statActiveRentals').textContent = active;
@@ -1592,7 +1618,6 @@ function showMailer() { openModal('mailerModal'); }
 async function sendMailing() {
   const title = document.getElementById('mailerTitle')?.value.trim() || 'Сообщение от администрации';
   const text  = document.getElementById('mailerText')?.value.trim();
-  const target = document.getElementById('mailerTarget')?.value || 'all';
 
   if (!text) { showToast('Введите текст сообщения'); return; }
 
@@ -1603,7 +1628,7 @@ async function sendMailing() {
   try {
     await fetch(`${API}/api/messages`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, body: text, target })
+      body: JSON.stringify({ title, body: text, target: 'all' })
     });
   } catch(e) { console.warn('Messages API error:', e.message); }
 
@@ -1614,17 +1639,17 @@ async function sendMailing() {
 
 // ===== REPORT =====
 function showReport() {
-  const activeCount = bookings.filter(b => b.status === 'active').length;
-  const newCount = bookings.filter(b => b.status === 'new').length;
+  const parsePrice = val => { const n = parseInt(String(val).replace(/\s/g, '').replace(/[^\d]/g, ''), 10); return isNaN(n) ? 0 : n; };
+  const activeCount = bookings.filter(b => ['confirmed','active'].includes(b.status)).length;
+  const newCount = bookings.filter(b => b.status === 'pending' || b.status === 'new').length;
   const revenue = bookings
-    .filter(b => b.status === 'active')
-    .reduce((sum, b) => sum + parseInt(b.price.replace(/\s/g, ''), 10), 0);
+    .filter(b => ['confirmed','active','completed','returned'].includes(b.status))
+    .reduce((sum, b) => sum + parsePrice(b.price), 0);
   const avgCheck = activeCount > 0 ? Math.round(revenue / activeCount) : 0;
-  const transferTotal = transferBookings.length;
-  const paidTransfers = transferBookings.filter(t => t.status === 'paid').length;
+  const transferTotal = transferBookings.filter(t => t.status === 'pending').length;
   const transferRevenue = transferBookings
     .filter(t => t.status === 'paid' && t.price)
-    .reduce((sum, t) => sum + parseInt(t.price.replace(/\s/g, ''), 10), 0);
+    .reduce((sum, t) => sum + parsePrice(t.price), 0);
 
   document.getElementById('reportActive').textContent = activeCount;
   document.getElementById('reportNew').textContent = newCount;
