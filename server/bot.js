@@ -114,8 +114,8 @@ async function clientReceiptDeclined(t) {
 async function adminVerificationRequest(v) {
   await sendToAdmins(
     `📄 <b>Новые документы на верификацию</b>\n\n` +
-    `👤 ${v.name}\n` +
-    `🪪 Паспорт: ${v.passport}`
+    `👤 Новый клиент — ${v.name}\n\n` +
+    `Проверьте документы в админ-панели.`
   );
 }
 

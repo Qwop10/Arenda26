@@ -1685,9 +1685,9 @@ async function renderAdminVerification() {
         <span class="status-badge ${statusClass[v.status] || 'new'}">${statusLabel[v.status] || v.status}</span>
       </div>
       <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-        ${v.passport_img ? `<img src="${v.passport_img}" style="width:80px;height:56px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="openDocPhoto('${v.passport_img}')" title="Паспорт">` : ''}
-        ${v.registration_img ? `<img src="${v.registration_img}" style="width:80px;height:56px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="openDocPhoto('${v.registration_img}')" title="Прописка">` : ''}
-        ${v.license_img ? `<img src="${v.license_img}" style="width:80px;height:56px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="openDocPhoto('${v.license_img}')" title="В/у">` : ''}
+        ${v.passport_img ? `<img src="${v.passport_img}" data-verifid="${v.id}" data-doctype="passport" class="verif-doc-img" style="width:80px;height:56px;object-fit:cover;border-radius:6px;cursor:pointer" title="Паспорт">` : ''}
+        ${v.registration_img ? `<img src="${v.registration_img}" data-verifid="${v.id}" data-doctype="registration" class="verif-doc-img" style="width:80px;height:56px;object-fit:cover;border-radius:6px;cursor:pointer" title="Прописка">` : ''}
+        ${v.license_img ? `<img src="${v.license_img}" data-verifid="${v.id}" data-doctype="license" class="verif-doc-img" style="width:80px;height:56px;object-fit:cover;border-radius:6px;cursor:pointer" title="В/у">` : ''}
       </div>
       ${v.status === 'pending' ? `
         <div class="bt-actions" style="margin-top:8px">
@@ -1696,6 +1696,11 @@ async function renderAdminVerification() {
         </div>` : ''}
     </div>
   `).join('');
+
+  // Клик по фото через делегирование — base64 не попадает в onclick
+  container.querySelectorAll('.verif-doc-img').forEach(img => {
+    img.addEventListener('click', () => openDocPhoto(img.src));
+  });
 }
 
 function openDocPhoto(src) {
