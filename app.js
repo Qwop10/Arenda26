@@ -362,8 +362,10 @@ function renderCatalog() {
 
 // ===== BOOKING STATUS HELPER =====
 function getBookingDisplayStatus(b) {
-  if (b.status === 'new') return { label: 'Ожидает', cls: 'new' };
+  if (b.status === 'pending' || b.status === 'new') return { label: 'Ожидает', cls: 'new' };
+  if (b.status === 'confirmed') return { label: 'Подтверждена', cls: 'active' };
   if (b.status === 'declined') return { label: 'Отклонена', cls: 'done' };
+  if (b.status === 'returned') return { label: 'Возврат', cls: 'done' };
   try {
     const parts = b.end.split('.');
     if (parts.length === 3) {
@@ -1105,7 +1107,7 @@ function renderAdminBookings() {
   container.innerHTML = bookings.map((b, i) => {
     const st = getBookingDisplayStatus(b);
     return `
-    <div class="tr-row${b.status === 'declined' ? ' tr-row--faded' : ''}">
+    <div class="tr-row${b.status === 'declined' || b.status === 'returned' ? ' tr-row--faded' : ''}">
       <div class="tr-top">
         <div>
           <div class="admin-booking-client">${b.client}</div>
@@ -1120,31 +1122,56 @@ function renderAdminBookings() {
           <div class="admin-booking-price">${b.price} ₽</div>
         </div>
       </div>
-      ${b.status === 'new' ? `
+      ${b.status === 'pending' || b.status === 'new' ? `
         <div class="bt-actions" style="margin-top:8px">
           <button class="btn-confirm" onclick="confirmAdminBooking(${i})">✓ Подтвердить</button>
           <button class="btn-icon-decline" onclick="declineAdminBooking(${i})" title="Отклонить">✕</button>
+        </div>` : ''}
+      ${b.status === 'confirmed' || b.status === 'active' ? `
+        <div class="bt-actions" style="margin-top:8px">
+          <button class="btn-confirm" onclick="earlyReturnBooking(${i})">↩ Досрочный возврат</button>
         </div>` : ''}
     </div>
   `}).join('');
 }
 
-function confirmAdminBooking(index) {
-  bookings[index].status = 'active';
-  renderAdminBookings();
-  updateAdminStats();
-  renderRentals();
-  renderProfileRentals();
-  showToast(`✓ Аренда ${bookings[index].client} подтверждена`);
+async function confirmAdminBooking(index) {
+  const b = bookings[index];
+  try {
+    await fetch(`${API}/api/bookings/${b.id}/status`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'confirmed' })
+    });
+  } catch(e) {}
+  bookings[index].status = 'confirmed';
+  renderAdminBookings(); updateAdminStats(); renderRentals(); renderProfileRentals();
+  showToast(`✓ Аренда ${b.client} подтверждена`);
 }
 
-function declineAdminBooking(index) {
+async function declineAdminBooking(index) {
+  const b = bookings[index];
+  try {
+    await fetch(`${API}/api/bookings/${b.id}/status`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'declined' })
+    });
+  } catch(e) {}
   bookings[index].status = 'declined';
-  renderAdminBookings();
-  updateAdminStats();
-  renderRentals();
-  renderProfileRentals();
+  renderAdminBookings(); updateAdminStats(); renderRentals(); renderProfileRentals();
   showToast('Аренда отклонена');
+}
+
+async function earlyReturnBooking(index) {
+  const b = bookings[index];
+  try {
+    await fetch(`${API}/api/bookings/${b.id}/status`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'returned' })
+    });
+  } catch(e) {}
+  bookings[index].status = 'returned';
+  renderAdminBookings(); updateAdminStats(); renderRentals(); renderProfileRentals();
+  showToast('↩ Досрочный возврат оформлен');
 }
 
 function updateAdminStats() {
