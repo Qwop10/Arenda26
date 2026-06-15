@@ -375,23 +375,52 @@ function getBookingDisplayStatus(b) {
 
 // ===== RENDER RENTALS PAGE =====
 function renderRentals() {
+  const tgId = String(tg?.initDataUnsafe?.user?.id || '');
   const container = document.getElementById('rentalsList');
-  if (bookings.length === 0) {
+  const myBookings = tgId ? bookings.filter(b => String(b.tg_user_id) === tgId) : bookings;
+
+  if (myBookings.length === 0) {
     container.innerHTML = '<div class="empty-state">У вас пока нет аренд</div>';
-    return;
+  } else {
+    container.innerHTML = myBookings.map(r => {
+      const st = getBookingDisplayStatus(r);
+      return `
+      <div class="rental-card">
+        <div class="rental-top">
+          <div class="rental-car-name">${r.car}</div>
+          <span class="status-badge ${st.cls}">${st.label}</span>
+        </div>
+        <div class="rental-dates">${r.start} — ${r.end}</div>
+        <div class="rental-price">${r.price} ₽</div>
+      </div>`;
+    }).join('');
   }
-  container.innerHTML = bookings.map(r => {
-    const st = getBookingDisplayStatus(r);
-    return `
-    <div class="rental-card">
-      <div class="rental-top">
-        <div class="rental-car-name">${r.car}</div>
-        <span class="status-badge ${st.cls}">${st.label}</span>
-      </div>
-      <div class="rental-dates">${r.start} — ${r.end}</div>
-      <div class="rental-price">${r.price} ₽</div>
-    </div>
-  `}).join('');
+
+  // Трансферы на той же странице
+  const trContainer = document.getElementById('transferRentalsList');
+  if (!trContainer) return;
+  const myTransfers = tgId ? transferBookings.filter(t => String(t.tg_user_id) === tgId) : transferBookings;
+
+  if (myTransfers.length === 0) {
+    trContainer.innerHTML = '<div class="empty-state">У вас пока нет трансферов</div>';
+  } else {
+    const statusLabel = { pending: 'Ожидает', confirmed: 'Подтверждён', receipt_sent: 'Чек отправлен', paid: 'Оплачено', declined: 'Отклонён' };
+    const statusClass = { pending: 'new', confirmed: 'active', receipt_sent: 'new', paid: 'active', declined: 'done' };
+    trContainer.innerHTML = myTransfers.map((t, i) => {
+      const realIndex = transferBookings.indexOf(t);
+      return `
+      <div class="rental-card">
+        <div class="rental-top">
+          <div class="rental-car-name">${t.car}</div>
+          <span class="status-badge ${statusClass[t.status] || 'new'}">${statusLabel[t.status] || t.status}</span>
+        </div>
+        <div class="rental-dates">${t.from} → ${t.to}</div>
+        <div class="rental-dates">Подача: ${t.startTime}</div>
+        ${t.price ? `<div class="rental-price">${t.price} ₽</div>` : ''}
+        ${t.status === 'confirmed' ? `<button class="btn-primary full-width" style="margin-top:8px;padding:9px" onclick="openPaymentModal(${realIndex})">Оплатить</button>` : ''}
+      </div>`;
+    }).join('');
+  }
 }
 
 // ===== RENDER PROFILE RENTALS =====
@@ -399,13 +428,21 @@ function renderProfileRentals() {
   const container = document.getElementById('profileActiveRentals');
   if (!container) return;
 
-  const active = bookings.filter(b => b.status === 'active');
+  const tgId = String(tg?.initDataUnsafe?.user?.id || '');
+  const activeStatuses = ['pending', 'confirmed', 'active'];
+  const active = bookings.filter(b =>
+    activeStatuses.includes(b.status) && (!tgId || String(b.tg_user_id) === tgId)
+  );
+
   if (active.length === 0) {
     container.innerHTML = '<div class="empty-state" style="padding:10px 0">Нет активных аренд</div>';
     return;
   }
 
+  const statusLabel = { pending: 'Ожидает', confirmed: 'Подтверждена', active: 'Активна' };
+  const statusClass = { pending: 'new', confirmed: 'active', active: 'active' };
   const latest = active[0];
+  const st = latest.status;
   container.innerHTML = `
     <div class="rental-item active-rental" onclick="showPage('rentals')">
       <div class="ri-left">
@@ -414,7 +451,7 @@ function renderProfileRentals() {
         <div class="ri-price">${latest.price} ₽</div>
       </div>
       <div class="ri-right">
-        <span class="status-badge active">Активна</span>
+        <span class="status-badge ${statusClass[st] || 'new'}">${statusLabel[st] || st}</span>
         <button class="ri-more" onclick="showPage('rentals')">Подробнее ›</button>
       </div>
     </div>
@@ -886,8 +923,11 @@ function renderProfileTransfer() {
   const container = document.getElementById('profileActiveTransfer');
   if (!container) return;
 
+  const tgId = String(tg?.initDataUnsafe?.user?.id || '');
   const activeStatuses = ['pending', 'confirmed', 'receipt_sent'];
-  const active = transferBookings.filter(t => activeStatuses.includes(t.status));
+  const active = transferBookings.filter(t =>
+    activeStatuses.includes(t.status) && (!tgId || String(t.tg_user_id) === tgId)
+  );
 
   if (active.length === 0) {
     container.innerHTML = '<div class="empty-state" style="padding:10px 0">Нет активных трансферов</div>';
