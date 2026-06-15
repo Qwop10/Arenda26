@@ -707,10 +707,13 @@ async function submitTransfer() {
   };
 
   const tgId = tg?.initDataUnsafe?.user?.id || null;
+  const user = tg?.initDataUnsafe?.user;
+  const userName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Пользователь';
+
   const local = {
     id: Date.now(), car: selectedTransferCar.name,
     pricePerHour: selectedTransferCar.price,
-    from, to, startTime: fmt(start), status: 'pending'
+    from, to, startTime: fmt(start), status: 'pending', tg_user_id: tgId
   };
 
   try {
@@ -718,6 +721,7 @@ async function submitTransfer() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         car_id: selectedTransferCar.id, car_name: selectedTransferCar.name,
+        client_name: userName, client_phone: '',
         route: `${from} → ${to}`, date: fmt(start), tg_user_id: tgId
       })
     });
