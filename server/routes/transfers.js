@@ -40,11 +40,11 @@ router.post('/', async (req, res) => {
 });
 
 router.patch('/:id/status', async (req, res) => {
-  const { status, total_price } = req.body;
+  const { status, total_price, hours } = req.body;
   try {
     const { rows } = await pool.query(
-      'UPDATE transfer_bookings SET status=$1, total_price=COALESCE($2, total_price) WHERE id=$3 RETURNING *',
-      [status, total_price || null, req.params.id]
+      'UPDATE transfer_bookings SET status=$1, total_price=COALESCE($2, total_price), hours=COALESCE($3, hours) WHERE id=$4 RETURNING *',
+      [status, total_price || null, hours || null, req.params.id]
     );
     const transfer = rows[0];
     // Уведомить клиента

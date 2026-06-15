@@ -765,7 +765,7 @@ function renderAdminTransfers() {
         </div>
         <span class="status-badge ${statusClass[t.status]}">${statusLabel[t.status] || t.status}</span>
       </div>
-      ${t.price ? `<div class="bt-price-row">${t.price} ₽ · ${t.hours} ч.</div>` : ''}
+      ${t.price ? `<div class="bt-price-row">${Number(t.price).toLocaleString('ru')} ₽${t.hours ? ` · ${t.hours} ч.` : ''}</div>` : ''}
       ${t.status === 'pending' ? `
         <div class="bt-actions" style="margin-top:8px">
           <button class="btn-confirm" onclick="openConfirmTransferModal(${i})">✓ Подтвердить</button>
@@ -847,7 +847,7 @@ async function saveConfirmTransfer() {
   try {
     await fetch(`${API}/api/transfers/${t.id}/status`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'confirmed', total_price: total })
+      body: JSON.stringify({ status: 'confirmed', total_price: total, hours })
     });
   } catch(e) { console.warn('Transfer confirm error:', e.message); }
 
