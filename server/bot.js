@@ -1,5 +1,5 @@
 const TOKEN = process.env.BOT_TOKEN;
-const ADMIN = process.env.ADMIN_CHAT_ID;
+const ADMINS = [process.env.ADMIN_CHAT_ID, process.env.ADMIN_CHAT_ID_2].filter(Boolean);
 
 async function send(chatId, text) {
   if (!TOKEN || !chatId) return;
@@ -14,10 +14,14 @@ async function send(chatId, text) {
   }
 }
 
+async function sendToAdmins(text) {
+  for (const id of ADMINS) await send(id, text);
+}
+
 // ===== АРЕНДА =====
 
 async function adminNewBooking(b) {
-  await send(ADMIN,
+  await sendToAdmins(
     `🚗 <b>Новая заявка на аренду</b>\n\n` +
     `👤 Клиент: ${b.client_name}\n` +
     `🚘 Машина: ${b.car_name}\n` +
@@ -48,7 +52,7 @@ async function clientBookingDeclined(b) {
 // ===== ТРАНСФЕР =====
 
 async function adminNewTransfer(t) {
-  await send(ADMIN,
+  await sendToAdmins(
     `🚕 <b>Новая заявка на трансфер</b>\n\n` +
     `👤 Клиент: ${t.client_name}\n` +
     `🚘 Машина: ${t.car_name}\n` +
@@ -78,7 +82,7 @@ async function clientTransferDeclined(t) {
 }
 
 async function adminReceiptSent(t) {
-  await send(ADMIN,
+  await sendToAdmins(
     `🧾 <b>Клиент прислал чек об оплате</b>\n\n` +
     `👤 ${t.client_name}\n` +
     `🚘 ${t.car_name}\n` +
@@ -108,7 +112,7 @@ async function clientReceiptDeclined(t) {
 // ===== ВЕРИФИКАЦИЯ =====
 
 async function adminVerificationRequest(v) {
-  await send(ADMIN,
+  await sendToAdmins(
     `📄 <b>Новые документы на верификацию</b>\n\n` +
     `👤 ${v.name}\n` +
     `🪪 Паспорт: ${v.passport}`
